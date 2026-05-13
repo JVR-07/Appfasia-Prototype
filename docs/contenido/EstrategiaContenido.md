@@ -204,19 +204,45 @@ W_280,palabra,Justicia,5,s,CAT_012,abstracto,baja,justicia.webp,W_280.mp3,"valor
 
 **Columnas del CSV:**
 
+##Entidad de las categorias semanticas
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id_categoria` | `SERIAL` | ID único de la categoría semántica |
+| `nombre` | `VARCHAR(100)` | Nombre de la categoría |
+| `nivel_minimo` | `INT` | Nivel mínimo requerido |
+| `descripcion` | `TEXT` | Descripción de la categoría |
+
+##Entidad de los fonemas
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id_fonema` | `SERIAL` | ID único del fonema |
+| `representacion` | `VARCHAR(10)` | Representación textual del fonema |
+| `dificultad` | `VARCHAR(20)` | Nivel de dificultad del fonema |
+| `nivel_aparicion` | `INT` | Nivel en el que aparece el fonema |
+
+##Entidad de los recursos atomicos
+
 | Columna | Tipo | Descripción |
 |---|---|---|
 | `id_recurso` | `VARCHAR(10)` | ID único (ej. W_001) — generado secuencialmente |
 | `tipo` | `VARCHAR(20)` | `palabra`, `frase`, `metáfora` |
 | `texto` | `TEXT` | La palabra o frase en español |
 | `nivel_sugerido` | `INT (1-5)` | Nivel de competencia del plan |
-| `fonema_objetivo` | `VARCHAR(10)` | Fonema principal a evaluar (ej. `rr`, `bl`, `tr`) |
-| `id_categoria` | `VARCHAR(10)` | ID de categoría semántica |
-| `categoria_nombre` | `TEXT` | Nombre legible de la categoría |
-| `dificultad_art` | `VARCHAR(10)` | `alta`, `media`, `baja` (dificultad articulatoria) |
-| `imagen_archivo` | `VARCHAR(100)` | Nombre del archivo de imagen local (ej. `perro.webp`) — el script lo sube a Azure Blob y registra la URL CDN |
-| `audio_archivo` | `VARCHAR(100)` | Nombre del archivo MP3 generado por Azure TTS (ej. `W_001.mp3`) — se sube al mismo Blob container |
-| `tags` | `TEXT` | Lista separada por `\|` para búsqueda con GIN |
+| `fonema_objetivo_id` | `INT` | Fonema principal a evaluar (ej. `rr`, `bl`, `tr`) |
+| `dificultad_articulacion` | `VARCHAR(20)` | Dificultad de la articulación |
+| `url_media` | `TEXT` | URL del recurso como imagenes o sonidos |
+| `metadata_json` | `JSONB` | Metadatos como otros recursos |
+
+##Entidad de la categoria de los recursos
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id_recurso_categoria` | `SERIAL` | ID único de la relación recurso-categoría |
+| `id_recurso` | `INT` | ID del recurso asociado |
+| `id_categoria` | `INT` | ID de la categoría asociada |
+| `peso_relevancia` | `DECIMAL(3,2)` | Peso de relevancia de la relación |
 
 ---
 
