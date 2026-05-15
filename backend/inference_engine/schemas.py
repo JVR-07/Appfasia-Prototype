@@ -153,6 +153,26 @@ class EngineDecision:
     hardware_override: Optional[HardwareMode] = None
     requires_graph_query: bool = False
     target_level: Optional[int] = None
+    next_hito_id: Optional[str] = None
     avatar_mode: AvatarMode = AvatarMode.NEUTRAL
     consecutive_correct: int = 0
     consecutive_errors: int = 0
+
+
+@dataclass
+class SpacedRepEntry:
+    """A hito in the spaced repetition queue."""
+    hito_id: str
+    stage: int
+    next_review_ts: float
+    last_ipf: Optional[float] = None
+    enqueued_at: Optional[float] = None
+
+
+@dataclass
+class SEMScore:
+    """Structured semantic evaluation score from LLM."""
+    score_global: float
+    dimensions: dict[str, float]
+    rubric_type: str
+    is_available: bool = True
