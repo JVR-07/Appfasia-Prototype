@@ -116,3 +116,66 @@ def evaluate(
 
     # 9. Default: repeat
     return EngineDecision(action=EngineAction.REPEAT, avatar_mode=ipf_result.avatar_mode)
+
+
+async def evaluate_with_graph(
+    metrics: RawMetrics,
+    bkt_state: BKTState,
+    session_context: SessionContext,
+    navigator: 'GraphNavigator',
+    mastered_ids: set[str],
+    recent_emas: Optional[List[float]] = None,
+    lag_tickets: Optional[List['LagTicket']] = None,
+    sem_score: Optional['SEMScore'] = None
+) -> EngineDecision:
+    """
+    Extended evaluate() that resolves requires_graph_query.
+    
+    After the existing cascade:
+    - If action == ADVANCE and requires_graph_query:
+        → call navigator.get_next_optimal_hito()
+        → populate next_hito_id in EngineDecision
+    - If lag_tickets exist:
+        → inject micro-exercise hitos into decision
+    - If sem_score is provided (Narrador/Pensador templates):
+        → factor SEM into the correct/incorrect determination
+    
+    Override logic: If we have SEM, it acts as a gatekeeper for correct/incorrect
+    We map SEM to IPF for the basic evaluate() to digest it if sem_score exists
+    If SEM < 70, we force a "wrong" evaluation even if other metrics were okay.
+    """
+    original_ipf = metrics.ipf
+    if sem_score and sem_score.is_available:
+        if sem_score.score_global >= 70.0:
+            # SEM says correct. Ensure IPF reflects this if it was missing/low.
+            if metrics.ipf is None or metrics.ipf < IPF_MASTERY:
+                metrics.ipf = IPF_MASTERY
+        else:
+            # SEM says incorrect. Force IPF low so it counts as an error.
+            metrics.ipf = 0.0
+
+    decision = evaluate(metrics, bkt_state, session_context, recent_emas)
+    
+    # Restore original metric for cleanliness
+    metrics.ipf = original_ipf
+
+    if lag_tickets and decision.action in (EngineAction.REPEAT, EngineAction.ADVANCE):
+        from inference_engine.graph.lag_detector import LagDetector
+        detector = LagDetector(navigator)
+        micro_hitos = await detector.get_micro_exercise_hitos(lag_tickets, max_count=2)
+        if micro_hitos:
+            decision.requires_graph_query = False
+            decision.target_level = None 
+            setattr(decision, "next_hito_id", micro_hitos[0]) 
+
+    if decision.action == EngineAction.ADVANCE and decision.requires_graph_query:
+        next_hito = await navigator.get_next_optimal_hito(mastered_ids, session_context.level)
+        if next_hito:
+            setattr(decision, "next_hito_id", next_hito.id_hito)
+            decision.target_level = next_hito.nivel
+        else:
+            # Reached end of graph for this level
+            pass
+        decision.requires_graph_query = False
+
+    return decision
