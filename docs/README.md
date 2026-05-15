@@ -43,9 +43,9 @@ Ubicación: `docs/contenido/`
 
 Ubicación: `docs/backend/`
 
-| Documento                                          | Descripción                                                                                                                                 |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| [MotorInferencia.md](./backend/MotorInferencia.md) | Documentación oficial de la implementación del BKT, métricas (IPF/LME/TRA), dosificación, reglas clínicas y máquina de estados diagnóstica. |
+| Documento                                          | Descripción                                                                                                                                                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [MotorInferencia.md](./backend/MotorInferencia.md) | Documentación oficial de la implementación del BKT, métricas (IPF/LME/TRA/SEM), plantillas de ejercicio, evaluador semántico LLM, dosificación, reglas clínicas, ~200 hitos y máquina de estados diagnóstica. |
 
 ---
 
@@ -90,6 +90,9 @@ Ubicación: `docs/entorno/`
 | Entorno Docker Compose               | DockerCompose.md           |
 | Estructura de wireframes (plantilla) | frontend/Wireframes.md     |
 | Lógica Clínica e Implementación BKT  | backend/MotorInferencia.md |
+| Plantillas de Ejercicio (8 tipos)    | backend/MotorInferencia.md |
+| Evaluador Semántico LLM (SEM)        | backend/MotorInferencia.md |
+| Alcance de Hitos (~200 nodos)        | backend/MotorInferencia.md |
 | Estrategia de QA y Suite de Pruebas  | entorno/Testing.md         |
 
 ---
