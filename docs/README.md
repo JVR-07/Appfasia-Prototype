@@ -35,7 +35,17 @@ Ubicación: `docs/contenido/`
 | Documento                                                    | Descripción                                                                                                                                                                                                           |
 | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [EstrategiaContenido.md](./contenido/EstrategiaContenido.md) | Catálogo de 315 recursos distribuidos en 5 niveles y 16 categorías semánticas, estrategia de imágenes (Flaticon/Freepik), generación de audios con Azure TTS, estructura del CSV de seeding y pipeline de importación |
-| [BibliotecaPadres.md](./contenido/BibliotecaPadres.md)       | Catálogo de artículos informativos para el Modo Padres: 13 artículos en 4 categorías, estructura JSON por artículo, estrategia de almacenamiento y base de conocimiento RAG para el chatbot                          |
+| [BibliotecaPadres.md](./contenido/BibliotecaPadres.md)       | Catálogo de artículos informativos para el Modo Padres: 13 artículos en 4 categorías, estructura JSON por artículo, estrategia de almacenamiento y base de conocimiento RAG para el chatbot                           |
+
+---
+
+### ⚙️ Backend (Motor)
+
+Ubicación: `docs/backend/`
+
+| Documento                                          | Descripción                                                                                                                                 |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| [MotorInferencia.md](./backend/MotorInferencia.md) | Documentación oficial de la implementación del BKT, métricas (IPF/LME/TRA), dosificación, reglas clínicas y máquina de estados diagnóstica. |
 
 ---
 
@@ -56,6 +66,7 @@ Ubicación: `docs/entorno/`
 | Documento                                      | Descripción                                                                                                                                                             |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [DockerCompose.md](./entorno/DockerCompose.md) | Configuración completa del entorno local: `docker-compose.yml`, `Dockerfile` del backend, `requirements.txt`, `.env.example`, esquema SQL inicial y comandos de gestión |
+| [Testing.md](./entorno/Testing.md)             | Estrategia de QA para el motor y frontend, cubriendo `pytest`, uso de mocks (`fakeredis`, `unittest.mock`) y detalle de los 124 tests de la capa clínica del Sprint 1.  |
 
 ---
 
@@ -63,21 +74,23 @@ Ubicación: `docs/entorno/`
 
 ### ✅ Completado
 
-| Área                                 | Documento               |
-| ------------------------------------ | ----------------------- |
-| Stack tecnológico y framework        | ArquitecturaTecnica.md  |
-| Capa de datos híbrida                | ArquitecturaTecnica.md  |
-| Motor de inferencia BKT              | ArquitecturaTecnica.md  |
-| Pipeline de métricas clínicas        | ArquitecturaTecnica.md  |
-| Motor de contenido y plantillas      | ArquitecturaTecnica.md  |
-| Integración Avatar + LLM             | ArquitecturaTecnica.md  |
-| Frontend adaptativo (especificación) | ArquitecturaTecnica.md  |
-| Contrato de API REST (19 endpoints)  | ContratoAPI.md          |
-| Autenticación JWT                    | ContratoAPI.md          |
-| Algoritmo Diagnóstico Basal/Ceiling  | AlgoritmoDiagnostico.md |
-| Estrategia de contenido (315 items)  | EstrategiaContenido.md  |
-| Entorno Docker Compose               | DockerCompose.md        |
-| Estructura de wireframes (plantilla) | frontend/Wireframes.md  |
+| Área                                 | Documento                  |
+| ------------------------------------ | -------------------------- |
+| Stack tecnológico y framework        | ArquitecturaTecnica.md     |
+| Capa de datos híbrida                | ArquitecturaTecnica.md     |
+| Motor de inferencia BKT              | ArquitecturaTecnica.md     |
+| Pipeline de métricas clínicas        | ArquitecturaTecnica.md     |
+| Motor de contenido y plantillas      | ArquitecturaTecnica.md     |
+| Integración Avatar + LLM             | ArquitecturaTecnica.md     |
+| Frontend adaptativo (especificación) | ArquitecturaTecnica.md     |
+| Contrato de API REST (19 endpoints)  | ContratoAPI.md             |
+| Autenticación JWT                    | ContratoAPI.md             |
+| Algoritmo Diagnóstico Basal/Ceiling  | AlgoritmoDiagnostico.md    |
+| Estrategia de contenido (315 items)  | EstrategiaContenido.md     |
+| Entorno Docker Compose               | DockerCompose.md           |
+| Estructura de wireframes (plantilla) | frontend/Wireframes.md     |
+| Lógica Clínica e Implementación BKT  | backend/MotorInferencia.md |
+| Estrategia de QA y Suite de Pruebas  | entorno/Testing.md         |
 
 ---
 
@@ -95,19 +108,18 @@ Ubicación: `docs/entorno/`
 
 ### 🔜 Pendientes — Bloque 2 · Backend
 
-| Área                                                             | Documento destino               | Prioridad |
-| ---------------------------------------------------------------- | ------------------------------- | --------- |
-| Seeding del grafo ArcadeDB (hitos + aristas)                     | backend/GrafoConocimiento.md    | 🔴 Alta   |
-| Intervención del tutor (ajuste R0 y salto de hitos)              | backend/IntervencionTutor.md    | 🟡 Media  |
-| Algoritmo de repetición espaciada (técnico)                      | backend/RepeticionEspaciada.md  | 🟡 Media  |
-| Lógica de traducción de métricas para padres                     | backend/DashboardPadres.md      | 🟡 Media  |
-| Manejo de errores y logging (estándar FastAPI)                   | backend/ErroresLogging.md       | 🟢 Baja   |
+| Área                                                | Documento destino              | Prioridad |
+| --------------------------------------------------- | ------------------------------ | --------- |
+| Seeding del grafo ArcadeDB (hitos + aristas)        | backend/GrafoConocimiento.md   | 🔴 Alta   |
+| Intervención del tutor (ajuste R0 y salto de hitos) | backend/IntervencionTutor.md   | 🟡 Media  |
+| Algoritmo de repetición espaciada (técnico)         | backend/RepeticionEspaciada.md | 🟡 Media  |
+| Lógica de traducción de métricas para padres        | backend/DashboardPadres.md     | 🟡 Media  |
+| Manejo de errores y logging (estándar FastAPI)      | backend/ErroresLogging.md      | 🟢 Baja   |
 
 ---
 
 ### 🔜 Pendientes — Bloque 3 · Transversal (paralelo al desarrollo)
 
-| Área                                          | Documento destino           | Prioridad |
-| --------------------------------------------- | --------------------------- | --------- |
-| Estrategia de testing (pytest/vitest)         | entorno/Testing.md          | 🟡 Media  |
-| Biblioteca informativa para padres (artículos)| contenido/BibliotecaPadres.md | 🟡 Media  |
+| Área                                           | Documento destino             | Prioridad |
+| ---------------------------------------------- | ----------------------------- | --------- |
+| Biblioteca informativa para padres (artículos) | contenido/BibliotecaPadres.md | 🟡 Media  |
