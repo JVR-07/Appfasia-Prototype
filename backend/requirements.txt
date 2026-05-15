@@ -32,3 +32,12 @@ fakeredis>=2.23.0
 
 # Linting
 ruff>=0.4.0
+
+# Graph database (ArcadeDB via BOLT protocol)
+neo4j>=5.20.0
+
+# Graph simulation for tests
+networkx>=3.3
+
+# LLM Evaluation
+google-generativeai>=0.5.2
