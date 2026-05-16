@@ -1,19 +1,19 @@
 import json
-import google.generativeai as genai
 from typing import Optional
+
+import google.genai as genai
+from google.genai import types as genai_types
 
 from inference_engine.schemas import SEMScore
 
 PRIMARY_MODEL = "gemini-2.5-flash"
-FALLBACK_MODEL = "gemini-2.5-flash-lite"
+FALLBACK_MODEL = "gemini-2.5-flash-8b"
 SEM_MASTERY_THRESHOLD = 70.0
 
 
 class LLMEvaluator:
     def __init__(self, api_key: str) -> None:
-        genai.configure(api_key=api_key)
-        self._primary = genai.GenerativeModel(PRIMARY_MODEL)
-        self._fallback = genai.GenerativeModel(FALLBACK_MODEL)
+        self._client = genai.Client(api_key=api_key)
 
     async def evaluate_narration(
         self, transcript: str, exercise_context: str, level: int
@@ -50,20 +50,21 @@ class LLMEvaluator:
 
     async def _call_llm(self, prompt: str, rubric_type: str) -> SEMScore:
         try:
+            config = genai_types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
             try:
-                response = await self._primary.generate_content_async(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        response_mime_type="application/json",
-                    ),
+                response = await self._client.aio.models.generate_content(
+                    model=PRIMARY_MODEL,
+                    contents=prompt,
+                    config=config,
                 )
             except Exception:
                 # Fallback
-                response = await self._fallback.generate_content_async(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        response_mime_type="application/json",
-                    ),
+                response = await self._client.aio.models.generate_content(
+                    model=FALLBACK_MODEL,
+                    contents=prompt,
+                    config=config,
                 )
 
             data = json.loads(response.text)
