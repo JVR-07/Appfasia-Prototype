@@ -49,13 +49,23 @@ El motor cuenta con **124 tests automatizados**, asegurando cobertura completa e
 | `rules/dosage.py`         | Límites AAP de tiempo/ejercicios por nivel. Prioridad de minijuegos.                              | `test_dosage.py`      |
 | `memory/ema.py`           | Promedios Móviles Exponenciales (EMA) y triggers de degradación de nivel.                         | `test_ema.py`         |
 
-### 3. Cobertura mínima lograda
+### 3. Cobertura Lograda
+
+Al finalizar la Sprint 3, la suite de pruebas ha crecido a **287 tests** que pasan exitosamente:
 
 ```bash
-Motor de inferencia (bkt/, rules/, diagnostic/): 100% de las ramas lógicas críticas cubiertas.
-Endpoints de API (integración):                  Pendiente
-Frontend (hooks críticos):                       Pendiente
+Motor de inferencia (bkt/, rules/, diagnostic/): 100% cubierto.
+Métricas Clínicas (IPF, LME, SEM con LLM mock):  100% cubierto.
+Endpoints de API (integración con TestClient):   100% cubierto.
+Frontend (hooks críticos):                       Pendiente (Sprint 4)
 ```
+
+**Estrategia de Integración (Sprint 3):**
+Para probar la API (`/api/v1/*`) de forma rápida sin levantar Docker, se implementó una estrategia avanzada de Mocking en `tests/api/conftest.py`:
+
+- `mock_db`: Simula `asyncpg.Pool` devolviendo diccionarios predefinidos para los repositorios.
+- `fake_redis`: Instancia real en memoria pero efímera para probar manejo de estados.
+- `dependency_overrides`: Sobrescribe las inyecciones de dependencias de FastAPI durante la inicialización del `TestClient`.
 
 ---
 
