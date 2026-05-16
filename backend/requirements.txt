@@ -2,8 +2,15 @@
 fastapi>=0.111.0
 uvicorn[standard]>=0.30.0
 
+# Settings
+pydantic-settings>=2.0.0
+
+# Auth
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+
 # BKT engine
-pyBKT>=1.4.2
+pyBKT==1.4.1
 numpy>=1.26.0
 
 # NLP / LME metric
@@ -16,14 +23,14 @@ py-stringmatching>=0.4.3
 asyncpg>=0.29.0
 redis>=5.0.0
 
-# Azure STT (Sprint 1: mocked, Sprint 2+: real calls)
+# Azure STT (mock for dev, real for prod)
 azure-cognitiveservices-speech>=1.38.0
 
 # HTTP client for async service calls
 httpx>=0.27.0
 
 # Data validation
-pydantic>=2.7.0
+pydantic[email]>=2.7.0
 
 # Testing
 pytest>=8.2.0
@@ -39,5 +46,6 @@ neo4j>=5.20.0
 # Graph simulation for tests
 networkx>=3.3
 
-# LLM Evaluation
-google-generativeai>=0.5.2
+# LLM Evaluation + Chatbot (new SDK — replaces deprecated google-generativeai)
+google-genai>=1.0.0
+
