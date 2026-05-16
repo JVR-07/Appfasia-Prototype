@@ -32,7 +32,8 @@ services:
     volumes:
       - arcadedb_data:/home/arcadedb/databases
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:2480/api/v1/ready"]
+      test:
+        ["CMD", "wget", "-q", "--spider", "http://localhost:2480/api/v1/ready"]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -76,6 +77,20 @@ services:
       redis:
         condition: service_healthy
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: appfasia_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
