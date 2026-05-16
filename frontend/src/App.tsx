@@ -1,22 +1,35 @@
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { AuthPage } from "./pages/parent/AuthPage";
+import { Dashboard } from "./pages/parent/Dashboard";
+import { useAuthStore } from "./store/useAuthStore";
 import "./App.css";
+
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  return isAuthenticated ? children : <Navigate to="/" />;
+};
 
 function App() {
   return (
-    <div className="app-container">
-      <div className="card text-center">
-        <h1 style={{ marginBottom: "1rem", color: "var(--color-primary)" }}>
-          Appfasia
-        </h1>
-        <p style={{ marginBottom: "2rem", color: "var(--color-text-muted)" }}>
-          Sistema de Diseño Base Inicializado
-        </p>
-
-        <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
-          <button className="btn btn-primary">Botón Primario</button>
-          <button className="btn btn-secondary">Botón Secundario</button>
-        </div>
-      </div>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<AuthPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Router>
   );
 }
 
