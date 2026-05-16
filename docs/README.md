@@ -109,15 +109,14 @@ Ubicación: `docs/entorno/`
 
 ---
 
-### 🔜 Pendientes — Bloque 2 · Backend
+### 🔜 Pendientes — Bloque 2 · Backend (Infraestructura de Datos Restante)
 
-| Área                                                | Documento destino              | Prioridad |
-| --------------------------------------------------- | ------------------------------ | --------- |
-| Seeding del grafo ArcadeDB (hitos + aristas)        | backend/GrafoConocimiento.md   | 🔴 Alta   |
-| Intervención del tutor (ajuste R0 y salto de hitos) | backend/IntervencionTutor.md   | 🟡 Media  |
-| Algoritmo de repetición espaciada (técnico)         | backend/RepeticionEspaciada.md | 🟡 Media  |
-| Lógica de traducción de métricas para padres        | backend/DashboardPadres.md     | 🟡 Media  |
-| Manejo de errores y logging (estándar FastAPI)      | backend/ErroresLogging.md      | 🟢 Baja   |
+_Nota: La API REST, el patrón de repositorios, la base de datos PostgreSQL, la autenticación JWT y los servicios de LLM ya fueron completados exitosamente en la Sprint 3. Faltan los scripts finales de ingesta de contenido._
+
+| Área                                         | Documento destino                | Prioridad |
+| -------------------------------------------- | -------------------------------- | --------- |
+| Seeding del grafo ArcadeDB (hitos + aristas) | backend/GrafoConocimiento.md     | 🔴 Alta   |
+| Importación del catálogo CSV a PostgreSQL    | contenido/EstrategiaContenido.md | 🔴 Alta   |
 
 ---
 
