@@ -20,7 +20,7 @@ export const LessonPage = () => {
 
   const mapTemplateToType = (
     plantilla: string,
-  ): "naming" | "repetition" | "match" | "constructor" => {
+  ): ActivityInstance["type"] => {
     switch (plantilla) {
       case "Nombrador":
         return "naming";
@@ -31,6 +31,10 @@ export const LessonPage = () => {
       case "Constructor":
       case "Ordenador":
         return "constructor";
+      case "Narrador":
+        return "narrator";
+      case "Pensador":
+        return "thinker";
       default:
         return "naming";
     }
@@ -49,6 +53,7 @@ export const LessonPage = () => {
       targetWord: ejercicio.texto_esperado,
       imageUrl: ejercicio.prompt?.imagen_url,
       audioUrl: ejercicio.prompt?.audio_url,
+      plantilla: ejercicio.plantilla,
       options: ejercicio.opciones?.map((o: any) => ({
         id: o.id,
         label: o.texto || o.id,
@@ -112,7 +117,8 @@ export const LessonPage = () => {
         tipo_respuesta: result.idSeleccionado ? "seleccion" : "audio",
         id_seleccionado: result.idSeleccionado,
         tra_ms: result.timeTakenMs,
-        plantilla: "Practica",
+        plantilla: result.plantilla || "Practica",
+        transcript: result.transcript,
       });
 
       if (stepRes.estado_sesion === "COMPLETADA") {

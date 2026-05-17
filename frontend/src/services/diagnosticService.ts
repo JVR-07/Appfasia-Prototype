@@ -14,6 +14,7 @@ export interface DiagnosticResponseBody {
   id_seleccionado?: string;
   tra_ms?: number;
   audio_base64?: string;
+  is_correct?: boolean;
 }
 
 export interface DiagnosticStepResult {

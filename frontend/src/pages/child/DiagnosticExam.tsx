@@ -72,7 +72,8 @@ export const DiagnosticExam = () => {
         tipo_respuesta: result.idSeleccionado ? "seleccion" : "audio",
         id_seleccionado: result.idSeleccionado,
         tra_ms: result.timeTakenMs,
-        // audio_base64: "" // omitido por ahora
+        is_correct: result.isCorrect,
+        audio_base64: result.audioBase64 || "",
       });
 
       if (stepRes.estado === "COMPLETADO") {
