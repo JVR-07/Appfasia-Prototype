@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { SessionOrchestrator } from "../../components/Child/Exercises/SessionOrchestrator";
 import { useChildStore } from "../../store/useChildStore";
 import { diagnosticService } from "../../services/diagnosticService";
-import type {
-  ActivityInstance,
-  ActivityResult,
+import {
+  type ActivityInstance,
+  type ActivityResult,
 } from "../../components/Child/Exercises/types";
 
 export const DiagnosticExam = () => {
