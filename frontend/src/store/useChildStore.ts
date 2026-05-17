@@ -1,8 +1,8 @@
 import { create } from "zustand";
-import type { childrenService, Child } from "../services/childrenService";
-import type {
+import { childrenService, type Child } from "../services/childrenService";
+import {
   progressService,
-  ProgressSummary,
+  type ProgressSummary,
 } from "../services/progressService";
 
 interface ChildState {
