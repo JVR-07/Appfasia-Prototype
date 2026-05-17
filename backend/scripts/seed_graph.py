@@ -8,7 +8,7 @@ import os
 import sys
 import argparse
 
-from scripts.hito_catalog import HITOS
+from hito_catalog import HITOS
 
 
 def build_hito_dicts() -> tuple[list[dict], list[tuple[str, str]]]:
@@ -83,11 +83,15 @@ async def seed_arcadedb(bolt_uri: str, user: str, password: str, db: str) -> Non
 
     try:
         async with driver.session(database=db) as session:
-            # Create schema
-            print("Creating vertex type Hito...")
-            await session.run(
-                "CREATE VERTEX TYPE Hito IF NOT EXISTS"
-            )
+            # Create schema (handled dynamically by Cypher on node creation)
+            # print("Creating vertex type Hito...")
+            # await session.run(
+            #     "CREATE VERTEX TYPE Hito IF NOT EXISTS"
+            # )
+
+            # Clear existing graph to make it idempotent
+            print("Clearing existing graph...")
+            await session.run("MATCH (n) DETACH DELETE n")
 
             # Insert nodes
             print(f"Inserting {len(nodes)} hitos...")

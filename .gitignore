@@ -52,3 +52,6 @@ dist/
 # Temp files
 temp.txt
 *.tmp
+
+# pnpm
+.pnpm-store/

@@ -25,7 +25,7 @@ services:
     container_name: appfasia_arcadedb
     restart: unless-stopped
     environment:
-      JAVA_OPTS: "-Darcadedb.server.rootPassword=${ARCADEDB_ROOT_PASSWORD}"
+      JAVA_OPTS: "-Darcadedb.server.rootPassword=${ARCADEDB_ROOT_PASSWORD} -Darcadedb.server.plugins=Neo4j:com.arcadedb.bolt.BoltProtocolPlugin"
     ports:
       - "2480:2480"
       - "7687:7687"
@@ -76,7 +76,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: >
+      sh -c "
+      python scripts/seed_postgres.py &&
+      python scripts/seed_graph.py --bolt=$$ARCADEDB_BOLT --user=$$ARCADEDB_USER --password=$$ARCADEDB_ROOT_PASSWORD --database=$$ARCADEDB_DATABASE &&
+      uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      "
 
   frontend:
     build:
@@ -84,6 +89,9 @@ services:
       dockerfile: Dockerfile
     container_name: appfasia_frontend
     restart: unless-stopped
+    environment:
+      - CI=true
+      - PNPM_CONFIG_FROZEN_LOCKFILE=false
     ports:
       - "5173:5173"
     volumes:
