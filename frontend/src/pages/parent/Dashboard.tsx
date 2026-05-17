@@ -1,23 +1,73 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
+import { useChildStore } from "../../store/useChildStore";
+import {
+  publicationsService,
+  type Publication,
+} from "../../services/publicationsService";
 import { Logo } from "../../components/Logo";
 import { ChatbotFab } from "../../components/Chatbot/ChatbotFab";
+import { AddChildModal } from "../../components/AddChildModal";
+import { ChildSelectorModal } from "../../components/ChildSelectorModal";
 import "./Dashboard.css";
 
 export const Dashboard = () => {
   const { tutorName, logout } = useAuthStore();
+  const { children, fetchChildren, addChild, setActiveChild } = useChildStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("tutor");
+
+  const [publicaciones, setPublicaciones] = useState<Publication[]>([]);
+  const [isAddChildOpen, setIsAddChildOpen] = useState(false);
+  const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  useEffect(() => {
+    fetchChildren();
+
+    const loadPubs = async () => {
+      try {
+        const pubs = await publicationsService.syncPublications();
+        setPublicaciones(pubs);
+      } catch (e) {
+        console.error("Error al cargar publicaciones", e);
+      }
+    };
+    loadPubs();
+  }, [fetchChildren]);
+
   const handleLogout = () => {
     logout();
     navigate("/");
+  };
+
+  const handleModoNino = () => {
+    if (children.length === 0) {
+      alert("Por favor agrega un niño primero.");
+      return;
+    }
+
+    if (children.length === 1) {
+      selectChild(children[0]);
+    } else {
+      setIsSelectorOpen(true);
+    }
+  };
+
+  const selectChild = (child: any) => {
+    setActiveChild(child);
+    setIsSelectorOpen(false);
+    setActiveTab("nino");
+    if (child.diagnostico_ok) {
+      navigate("/child/path");
+    } else {
+      navigate("/child/diagnostic/intro");
+    }
   };
 
   const startDragging = (e: React.MouseEvent) => {
@@ -38,10 +88,6 @@ export const Dashboard = () => {
     const walk = (x - startX) * 1.3;
     carouselRef.current.scrollLeft = scrollLeft - walk;
   };
-
-  const ninos = [];
-
-  const publicaciones = [];
 
   return (
     <div className="dashboard-container">
@@ -92,7 +138,7 @@ export const Dashboard = () => {
 
       {/* 2. Sección de niños */}
       <section className="children-section">
-        {ninos.length > 0 ? (
+        {children.length > 0 ? (
           <div
             className="children-carousel"
             ref={carouselRef}
@@ -101,11 +147,11 @@ export const Dashboard = () => {
             onMouseUp={stopDragging}
             onMouseMove={onDrag}
           >
-            {ninos.map((nino) => (
-              <div key={nino.id} className="child-card">
+            {children.map((nino) => (
+              <div key={nino.id_child} className="child-card">
                 <div className="child-avatar-container">
                   <img
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${nino.seed}&backgroundColor=f1f5f9`}
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${nino.id_child}&backgroundColor=f1f5f9`}
                     alt={nino.nombre}
                     className="child-avatar"
                   />
@@ -114,10 +160,27 @@ export const Dashboard = () => {
                 <div className="child-stats">
                   <h4>Métricas:</h4>
                   <ul>
-                    <li>🔥 Racha: {nino.racha} días</li>
-                    <li>⭐ Nivel: {nino.nivel}</li>
-                    <li>📈 Progreso: {nino.progreso}</li>
+                    <li>🔥 Racha: {nino.racha_dias} días</li>
+                    <li>
+                      ⭐ Nivel:{" "}
+                      {nino.diagnostico_ok
+                        ? nino.nivel_actual
+                        : "No diagnosticado"}
+                    </li>
                   </ul>
+                  <button
+                    className="btn-secondary"
+                    style={{
+                      width: "100%",
+                      marginTop: "1rem",
+                      padding: "0.5rem",
+                    }}
+                    onClick={() =>
+                      navigate(`/parent/progress/${nino.id_child}`)
+                    }
+                  >
+                    Ver progreso detallado
+                  </button>
                 </div>
               </div>
             ))}
@@ -132,7 +195,10 @@ export const Dashboard = () => {
             </p>
           </div>
         )}
-        <button className="add-child-btn-large">
+        <button
+          className="add-child-btn-large"
+          onClick={() => setIsAddChildOpen(true)}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="22"
@@ -171,8 +237,10 @@ export const Dashboard = () => {
                 <div className="pub-title">{pub.titulo}</div>
                 <div className="pub-content">{pub.resumen}</div>
                 <div className="pub-footer">
-                  <span>{pub.tags}</span>
-                  <span style={{ opacity: 0.7 }}>⏱ {pub.tiempo}</span>
+                  <span>{pub.tags.join(", ")}</span>
+                  <span style={{ opacity: 0.7 }}>
+                    ⏱ {pub.tiempo || "Reciente"}
+                  </span>
                 </div>
               </div>
             ))}
@@ -189,6 +257,19 @@ export const Dashboard = () => {
       {/* 4. Chatbot Flotante */}
       <ChatbotFab />
 
+      {/* Modales */}
+      <AddChildModal
+        isOpen={isAddChildOpen}
+        onClose={() => setIsAddChildOpen(false)}
+        onAdd={addChild}
+      />
+      <ChildSelectorModal
+        isOpen={isSelectorOpen}
+        onClose={() => setIsSelectorOpen(false)}
+        childrenList={children}
+        onSelect={selectChild}
+      />
+
       {/* 5. Bottom Bar */}
       <nav className="bottom-bar">
         <button
@@ -199,10 +280,7 @@ export const Dashboard = () => {
         </button>
         <button
           className={`bottom-bar-btn ${activeTab === "nino" ? "active" : ""}`}
-          onClick={() => {
-            setActiveTab("nino");
-            navigate("/child/diagnostic");
-          }}
+          onClick={handleModoNino}
         >
           Modo niño
         </button>

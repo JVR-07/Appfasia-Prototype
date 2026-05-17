@@ -1,50 +1,160 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SessionOrchestrator } from "../../components/Child/Exercises/SessionOrchestrator";
-import type { ActivityInstance } from "../../components/Child/Exercises/types";
-
-const MOCK_ACTIVITIES: ActivityInstance[] = [
-  {
-    id: "ex-1",
-    type: "naming",
-    title: "¿Qué es esto?",
-    subtitle: "Toca el micrófono y di el nombre en voz alta.",
-    targetWord: "Manzana",
-  },
-  {
-    id: "ex-2",
-    type: "repetition",
-    title: "Escucha y repite",
-    subtitle: "Presiona la bocina, escucha y luego repite.",
-    targetWord: "Pa",
-  },
-  {
-    id: "ex-3",
-    type: "match",
-    title: "Encuentra su pareja",
-    subtitle: "Toca la imagen correcta.",
-    targetWord: "opt-2",
-    imageUrl: "https://via.placeholder.com/150?text=Perro",
-    options: [
-      { id: "opt-1", label: "Gato" },
-      { id: "opt-2", label: "Perro" },
-      { id: "opt-3", label: "Pez" },
-    ],
-  },
-];
+import { useChildStore } from "../../store/useChildStore";
+import { diagnosticService } from "../../services/diagnosticService";
+import type {
+  ActivityInstance,
+  ActivityResult,
+} from "../../components/Child/Exercises/types";
 
 export const DiagnosticExam = () => {
   const navigate = useNavigate();
+  const { activeChild, loadChildProgress } = useChildStore();
 
-  const handleSessionComplete = (results: any) => {
-    console.log("Resultados del diagnóstico:", results);
-    alert("¡Examen completado! Volviendo a la ruta...");
-    navigate("/child/path");
+  const [sessionDiagId, setSessionDiagId] = useState<string | null>(null);
+  const [initialActivity, setInitialActivity] =
+    useState<ActivityInstance | null>(null);
+  const [maxInteracciones, setMaxInteracciones] = useState(15);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const startDiag = async () => {
+      if (!activeChild) {
+        navigate("/dashboard");
+        return;
+      }
+
+      try {
+        const res = await diagnosticService.startDiagnostic(
+          activeChild.id_child,
+        );
+        setSessionDiagId(res.session_diag_id);
+        setMaxInteracciones(res.max_interacciones || 15);
+
+        const ejercicioBackend = res.ejercicio;
+        const activity: ActivityInstance = {
+          id: ejercicioBackend.id_recurso || "ex-start",
+          type:
+            ejercicioBackend.tipo_interaccion === "seleccion"
+              ? "match"
+              : "naming",
+          title: ejercicioBackend.consigna || "¿Qué es esto?",
+          subtitle: res.avatar_mensaje || "Toca el micrófono y responde.",
+          targetWord: ejercicioBackend.texto_esperado,
+          imageUrl: ejercicioBackend.imagen_url,
+          options: ejercicioBackend.opciones?.map((o: any) => ({
+            id: o.id,
+            label: o.texto,
+          })),
+        };
+
+        setInitialActivity(activity);
+      } catch (e: any) {
+        setError(e.message || "Error al iniciar diagnóstico");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    startDiag();
+  }, [activeChild, navigate]);
+
+  const handleExerciseComplete = async (
+    result: ActivityResult,
+  ): Promise<ActivityInstance | null> => {
+    if (!sessionDiagId) return null;
+
+    try {
+      const stepRes = await diagnosticService.sendResponse({
+        session_diag_id: sessionDiagId,
+        tipo_respuesta: result.idSeleccionado ? "seleccion" : "audio",
+        id_seleccionado: result.idSeleccionado,
+        tra_ms: result.timeTakenMs,
+        // audio_base64: "" // omitido por ahora
+      });
+
+      if (stepRes.estado === "COMPLETADO") {
+        return null;
+      }
+
+      if (stepRes.siguiente_ejercicio) {
+        const nextEj = stepRes.siguiente_ejercicio;
+        return {
+          id: nextEj.id_recurso || `ex-${stepRes.interaccion_num}`,
+          type: nextEj.tipo_interaccion === "seleccion" ? "match" : "naming",
+          title: nextEj.consigna || "Siguiente ejercicio",
+          subtitle: "Continuemos",
+          targetWord: nextEj.texto_esperado,
+          imageUrl: nextEj.imagen_url,
+          options: nextEj.opciones?.map((o: any) => ({
+            id: o.id,
+            label: o.texto,
+          })),
+        };
+      }
+
+      return null;
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
   };
+
+  const handleSessionComplete = async () => {
+    if (activeChild) {
+      await loadChildProgress(activeChild.id_child);
+    }
+    navigate("/child/diagnostic/result");
+  };
+
+  if (isLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          backgroundColor: "var(--color-bg)",
+        }}
+      >
+        <h2 style={{ color: "var(--color-primary)" }}>
+          Cargando diagnóstico...
+        </h2>
+      </div>
+    );
+  }
+
+  if (error || !initialActivity) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          backgroundColor: "var(--color-bg)",
+          flexDirection: "column",
+        }}
+      >
+        <h2 style={{ color: "#e53e3e" }}>{error || "Error"}</h2>
+        <button
+          className="btn btn-primary"
+          onClick={() => navigate("/dashboard")}
+        >
+          Volver
+        </button>
+      </div>
+    );
+  }
 
   return (
     <SessionOrchestrator
-      activities={MOCK_ACTIVITIES}
+      initialActivity={initialActivity}
+      totalActivities={maxInteracciones}
+      onExerciseComplete={handleExerciseComplete}
       onSessionComplete={handleSessionComplete}
     />
   );

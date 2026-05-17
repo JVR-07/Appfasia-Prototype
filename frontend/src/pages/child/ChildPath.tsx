@@ -1,23 +1,81 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useChildStore } from "../../store/useChildStore";
 import "./ChildPath.css";
 
 export const ChildPath = () => {
   const navigate = useNavigate();
+  const { activeChild, activeProgress } = useChildStore();
 
-  // Simulación de niveles (ruta de aprendizaje)
-  const pathNodes = [
-    { id: 1, type: "start", title: "Inicio", status: "completed" },
-    { id: 2, type: "lesson", title: "Fonema P", status: "completed" },
-    { id: 3, type: "lesson", title: "Fonema B", status: "current" },
-    { id: 4, type: "chest", title: "Recompensa", status: "locked" },
-    { id: 5, type: "lesson", title: "Fonema T", status: "locked" },
-    { id: 6, type: "boss", title: "Repaso Final", status: "locked" },
-  ];
+  const buildDynamicNodes = () => {
+    const defaultNodes = [
+      { id: 1, type: "start", title: "Inicio", status: "completed" },
+      { id: 2, type: "lesson", title: "Lección Diaria", status: "current" },
+    ];
+
+    if (!activeProgress) return defaultNodes;
+
+    const dominados = activeProgress.resumen_semana?.hitos_dominados || 0;
+
+    const nodes = [
+      { id: 1, type: "start", title: "Inicio", status: "completed" },
+    ];
+
+    for (let i = 0; i < dominados; i++) {
+      nodes.push({
+        id: 2 + i,
+        type: "lesson",
+        title: `Lección ${i + 1}`,
+        status: "completed",
+      });
+    }
+
+    if (dominados >= 2) {
+      nodes.push({
+        id: nodes.length + 1,
+        type: "chest",
+        title: "¡Recompensa!",
+        status: "completed",
+      });
+    }
+
+    nodes.push({
+      id: nodes.length + 1,
+      type: "lesson",
+      title: "Hoy",
+      status: "current",
+    });
+
+    nodes.push({
+      id: nodes.length + 1,
+      type: "chest",
+      title: "Sorpresa",
+      status: "locked",
+    });
+    nodes.push({
+      id: nodes.length + 1,
+      type: "boss",
+      title: "Repaso",
+      status: "locked",
+    });
+
+    return nodes;
+  };
+
+  const pathNodes = buildDynamicNodes();
 
   const handleGoBack = () => {
-    // Para prototipo, regresar al dashboard del tutor
     navigate("/dashboard");
+  };
+
+  const handleNodeClick = (node: any) => {
+    if (node.status === "current") {
+      navigate("/child/lesson/intro");
+    } else if (node.status === "completed") {
+      alert("Ya completaste esta lección.");
+    } else {
+      alert("Debes completar la lección actual primero.");
+    }
   };
 
   return (
@@ -43,10 +101,11 @@ export const ChildPath = () => {
 
         <div className="path-stats">
           <div className="stat-pill" title="Nivel actual">
-            <span className="icon">⭐</span> Nivel 2
+            <span className="icon">⭐</span> Nivel{" "}
+            {activeChild?.nivel_actual || 1}
           </div>
           <div className="stat-pill" title="Racha de días">
-            <span className="icon">🔥</span> 5 Días
+            <span className="icon">🔥</span> {activeChild?.racha_dias || 0} Días
           </div>
         </div>
       </header>
@@ -55,13 +114,11 @@ export const ChildPath = () => {
       <main className="path-scroll-area">
         <div className="path-svg-container">
           {pathNodes.map((node, index) => {
-            // Posicionamiento en zigzag básico
             const isLeft = index % 2 === 0;
             const xOffset = isLeft ? "-40px" : "40px";
 
             return (
               <div key={node.id} className="path-node-wrapper">
-                {/* Conector SVG hacia el siguiente nodo (excepto el último) */}
                 {index < pathNodes.length - 1 && (
                   <svg
                     className={`path-connector ${isLeft ? "left-to-right" : "right-to-left"}`}
@@ -92,7 +149,7 @@ export const ChildPath = () => {
                 >
                   <button
                     className={`path-node ${node.type} ${node.status}`}
-                    onClick={() => alert(`Abriendo: ${node.title}`)}
+                    onClick={() => handleNodeClick(node)}
                   >
                     <div className="node-icon">
                       {node.type === "start" && "🚀"}
