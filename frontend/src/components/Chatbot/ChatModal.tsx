@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useChildStore } from "../../store/useChildStore";
+import { chatbotService } from "../../services/chatbotService";
 import "./Chatbot.css";
 
 interface Message {
@@ -18,6 +20,7 @@ export const ChatModal: React.FC<ChatModalProps> = ({
   onClose,
   mode,
 }) => {
+  const { activeChild } = useChildStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -55,11 +58,12 @@ export const ChatModal: React.FC<ChatModalProps> = ({
 
   const handleSend = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || !activeChild || !mode) return;
 
+    const userText = inputValue.trim();
     const newUserMsg: Message = {
       id: Date.now().toString(),
-      text: inputValue,
+      text: userText,
       sender: "user",
     };
 
@@ -67,32 +71,40 @@ export const ChatModal: React.FC<ChatModalProps> = ({
     setInputValue("");
     setIsTyping(true);
 
-    // TODO: Aquí se conectará el LLM real.
-    // Simulación de respuesta de la IA (Mock)
-    setTimeout(() => {
-      setIsTyping(false);
-      let botResponse = "";
+    try {
+      const historial = messages.map((m) => ({
+        rol: m.sender === "user" ? "user" : "model",
+        contenido: m.text,
+      }));
 
-      if (mode === "consejos") {
-        botResponse =
-          "Es una excelente pregunta. Te sugiero que refuercen jugando con tarjetas de memoria fonéticas antes de dormir. ¿Quieres que te detalle cómo armarlas?";
-      } else if (mode === "dudas") {
-        botResponse =
-          "El nivel 2 introduce fonemas fricativos de forma gradual porque ayuda a desarrollar el control del flujo de aire, lo cual es vital en esta etapa.";
-      } else {
-        botResponse =
-          'He notado que su precisión en los ejercicios de "Sílabas trabadas" mejoró un 40% esta semana. ¡Es un gran avance! Mantuvo una racha perfecta de 3 días.';
-      }
+      const res = await chatbotService.sendMessage({
+        child_id: activeChild.id_child,
+        mensaje: userText,
+        modo: mode,
+        historial: historial,
+      });
 
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now().toString(),
-          text: botResponse,
+          text: res.respuesta,
           sender: "bot",
         },
       ]);
-    }, 1500);
+    } catch (error) {
+      console.error("Error al comunicarse con el chatbot:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: "Lo siento, tuve un problema al procesar tu solicitud. Por favor intenta nuevamente.",
+          sender: "bot",
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const getTitle = () => {
@@ -135,6 +147,20 @@ export const ChatModal: React.FC<ChatModalProps> = ({
         </div>
 
         <div className="chat-body">
+          {!activeChild && (
+            <div
+              style={{
+                textAlign: "center",
+                color: "#e53e3e",
+                marginBottom: "15px",
+                padding: "10px",
+                background: "#fef2f2",
+                borderRadius: "8px",
+              }}
+            >
+              Por favor, selecciona un niño en el panel primero.
+            </div>
+          )}
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -160,12 +186,12 @@ export const ChatModal: React.FC<ChatModalProps> = ({
             placeholder="Escribe tu mensaje..."
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            disabled={isTyping}
+            disabled={isTyping || !activeChild}
           />
           <button
             type="submit"
             className="chat-send-btn"
-            disabled={!inputValue.trim() || isTyping}
+            disabled={!inputValue.trim() || isTyping || !activeChild}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
