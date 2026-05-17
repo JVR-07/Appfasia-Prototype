@@ -32,6 +32,7 @@ class DiagnosticResponse:
     correct_id: str
     tra_ms: int
     is_timeout: bool
+    is_correct_override: bool | None = None
 
 
 def evaluate_diagnostic_response(
@@ -50,7 +51,10 @@ def evaluate_diagnostic_response(
     Returns a DiagnosticStepResult indicating the new phase and,
     if completed, the final diagnostic result.
     """
-    is_correct = response.selected_id == response.correct_id and not response.is_timeout
+    if response.is_correct_override is not None:
+        is_correct = response.is_correct_override and not response.is_timeout
+    else:
+        is_correct = response.selected_id == response.correct_id and not response.is_timeout
 
     # ── Apply first-timeout grace ──
     if apply_first_timeout_grace(state, response.is_timeout):
