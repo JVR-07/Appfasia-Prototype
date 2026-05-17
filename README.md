@@ -162,26 +162,28 @@ Toda la documentación técnica se encuentra en [`/docs`](./docs/README.md).
 
 ## Estado del Proyecto
 
-### ✅ Arquitectura y diseño completados
+### ✅ Implementaciones Completadas (Sprints 1-4)
 
-- Stack tecnológico definido
-- Contrato de API REST (19 endpoints, 6 módulos)
-- Algoritmo diagnóstico Basal/Ceiling especificado
-- Motor de inferencia BKT diseñado
-- Pipeline de métricas clínicas (LME/IPF/TRA) definido
-- Estrategia de contenido (315 recursos, 5 niveles)
-- Entorno Docker Compose listo
+- **Arquitectura y Diseño:** Stack tecnológico, Contrato API, Algoritmo Diagnóstico Basal/Ceiling, Motor BKT, Pipeline de Métricas (LME/IPF/TRA) y Estrategia de contenido.
+- **Backend (API y Motor):** API REST (FastAPI), Base de datos PostgreSQL inicializada, Autenticación JWT, Integración de servicios AI (Azure STT, Gemini LLM). Cobertura de QA con 124 tests de lógica clínica.
+- **Base de Datos (Seeding):** Scripts de inicialización `seed_postgres.py` (palabras base) y `seed_arcadedb.py` (grafo de conocimiento).
+- **Frontend (Sistema de Diseño):** Inicialización React + Vite + TS + Zustand. Sistema UI Vanilla CSS con enfoque lúdico, variables consistentes, animaciones suaves y componentes "Glassmorphism".
+- **Modo Padres:** Vistas de Login y Dashboard responsivas. Implementación completa del componente Chatbot Asistente Flotante (animado con click-outside y auto-scroll).
+- **Modo Niños:**
+  - Mapa interactivo de progreso vertical (estilo Duolingo) con conexiones dinámicas SVG.
+  - **Orquestador de Sesiones:** Motor funcional para ejecutar diagnósticos y lecciones.
+  - **Ejercicios Interactivos:** Plantillas V-M (Naming), A-M (Repetition) y T-S (Match).
+  - **Integración Nativa:** Uso de la Web Speech API (Reconocimiento de voz y Síntesis de voz) en los ejercicios, incluyendo mecanismos robustos de "fallback" de accesibilidad y pruebas simuladas.
 
-### 🔜 Pendiente antes del primer sprint de código
+### 🔜 Próximos Pasos (Sprint 5 y posteriores)
 
-| Prioridad | Área                                                |
-| --------- | --------------------------------------------------- |
-| 🔴 Alta   | Wireframes de pantallas (Modo Niño y Modo Padres)   |
-| 🔴 Alta   | Seeding del grafo ArcadeDB (hitos y dependencias)   |
-| 🟡 Media  | Sistema de diseño visual y avatar                   |
-| 🟡 Media  | Algoritmo de repetición espaciada (detalle técnico) |
-| 🟡 Media  | Biblioteca informativa para padres (artículos)      |
-| 🟢 Baja   | Estrategia de testing                               |
+| Prioridad | Área                                                            |
+| --------- | --------------------------------------------------------------- |
+| 🔴 Alta   | Componente Avatar interactivo animado para guiar al niño        |
+| 🔴 Alta   | Integración End-to-End: Conectar Frontend React con Backend API |
+| 🟡 Media  | Lógica de renderizado y persistencia real de la ruta en la DB   |
+| 🟡 Media  | Especificación e implementación de los 3 Minijuegos de refuerzo |
+| 🟢 Baja   | Artículos reales para la biblioteca informativa RAG             |
 
 ---
 

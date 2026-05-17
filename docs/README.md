@@ -94,17 +94,18 @@ Ubicación: `docs/entorno/`
 | Evaluador Semántico LLM (SEM)        | backend/MotorInferencia.md |
 | Alcance de Hitos (~200 nodos)        | backend/MotorInferencia.md |
 | Estrategia de QA y Suite de Pruebas  | entorno/Testing.md         |
+| Inicialización y Config. de Frontend | README principal           |
+| Sistema de Diseño e UI (Modo Padres) | frontend/Wireframes.md     |
+| Orquestador y Ejercicios (Modo Niño) | frontend/Wireframes.md     |
 
 ---
 
-### 🔜 Pendientes — Bloque 1 · Frontend
+### 🔜 Pendientes — Bloque 1 · Frontend y Conexión
 
 | Área                                                   | Documento destino      | Prioridad |
 | ------------------------------------------------------ | ---------------------- | --------- |
-| Wireframes Modo Niño (13 pantallas)                    | frontend/Wireframes.md | 🔴 Alta   |
-| Wireframes Modo Padres (7 pantallas)                   | frontend/Wireframes.md | 🔴 Alta   |
-| Sistema de diseño (colores, tipografía)                | frontend/Wireframes.md | 🔴 Alta   |
-| Diseño visual del Avatar (nombre, estilo, animaciones) | frontend/Wireframes.md | 🟡 Media  |
+| Diseño visual del Avatar (nombre, estilo, animaciones) | frontend/Wireframes.md | 🔴 Alta   |
+| Integración End-to-End Frontend/FastAPI                | arquitectura/          | 🔴 Alta   |
 | Especificación de Minijuegos (mecánicas de juego)      | frontend/Wireframes.md | 🟡 Media  |
 
 ---
