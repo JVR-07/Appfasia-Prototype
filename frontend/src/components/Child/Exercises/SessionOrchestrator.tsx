@@ -120,7 +120,7 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
           <NamingExercise
             key={currentActivity.id}
             activity={currentActivity}
-            onSuccess={() => handleComplete(true)}
+            onSuccess={(transcript) => handleComplete(true, undefined, transcript)}
             onFail={handleFailAttempt}
           />
         )}
@@ -129,7 +129,7 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
           <RepetitionExercise
             key={currentActivity.id}
             activity={currentActivity}
-            onSuccess={() => handleComplete(true)}
+            onSuccess={(transcript) => handleComplete(true, undefined, transcript)}
             onFail={handleFailAttempt}
           />
         )}
