@@ -1,13 +1,14 @@
-export type ActivityType = "naming" | "repetition" | "match" | "constructor";
+export type ActivityType = "naming" | "repetition" | "match" | "constructor" | "narrator" | "thinker";
 
 export interface ActivityInstance {
   id: string;
-  type: "naming" | "repetition" | "match" | "constructor";
+  type: ActivityType;
   title: string;
   subtitle: string;
   targetWord: string;
   imageUrl?: string;
   audioUrl?: string;
+  plantilla?: string;
   options?: { id: string; label: string; imageUrl?: string }[];
 }
 
@@ -17,4 +18,7 @@ export interface ActivityResult {
   timeTakenMs: number;
   attempts: number;
   idSeleccionado?: string;
+  audioBase64?: string;
+  transcript?: string;
+  plantilla?: string;
 }
