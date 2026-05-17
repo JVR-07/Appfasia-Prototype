@@ -123,3 +123,22 @@ INSERT INTO categorias (nombre) VALUES
     ('objetos_del_hogar'), ('juguetes'), ('ropa'), ('colores_y_formas'),
     ('verbos'), ('emociones'), ('naturaleza_y_ciencia'), ('profesiones'),
     ('lugares'), ('lenguaje_figurado'), ('transporte'), ('conceptos_abstractos');
+
+-- Publicaciones
+CREATE TABLE publicaciones (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    titulo      VARCHAR(200) NOT NULL,
+    resumen     TEXT NOT NULL,
+    contenido   TEXT,
+    tags        TEXT[] DEFAULT '{}',
+    imagen_url  TEXT,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX idx_pub_created ON publicaciones(created_at DESC);
+
+-- Seed de publicaciones iniciales
+INSERT INTO publicaciones (titulo, resumen, tags) VALUES
+    ('Bienvenido a Appfasia', 'Tu asistente inteligente para el apoyo en terapia del lenguaje.', ARRAY['bienvenida']),
+    ('¿Qué son los fonemas?', 'Un fonema es la unidad mínima de sonido que puede distinguir significados.', ARRAY['educación', 'fonología']),
+    ('Consejos para practicar en casa', 'Actividades sencillas que puedes hacer con tu pequeño fuera de la aplicación.', ARRAY['consejos', 'práctica']);
+
