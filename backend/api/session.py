@@ -13,6 +13,7 @@ from inference_engine.metrics.tra import classify_tra
 from inference_engine.persistence.redis_state import RedisStateManager
 from inference_engine.persistence.redis_spaced_rep import RedisSpacedRepManager
 from inference_engine.memory.spaced_repetition import should_enqueue
+from inference_engine.bkt.calibrator import calibrate_hito_state
 from inference_engine.schemas import (
     RawMetrics, BKTState, SessionContext, EngineAction,
 )
@@ -54,6 +55,7 @@ class ResponseRequest(BaseModel):
     plantilla: str = "Nombrador"
     tra_ms: int = 0
     es_timeout: bool = False
+    transcript: str | None = None
 
 
 # ── Helpers ──
@@ -68,12 +70,30 @@ async def _get_mastered_ids(child_id: UUID, db: asyncpg.Connection) -> set[str]:
 
 async def _check_daily_limit(child_id: UUID, db: asyncpg.Connection, level: int) -> bool:
     """True if limit is reached."""
-    from inference_engine.rules.dosage_rules import check_session_limit
-    count = await db.fetchval(
-        "SELECT COUNT(*) FROM sesiones WHERE id_child = $1 AND DATE(fecha_inicio) = CURRENT_DATE",
+    from inference_engine.rules.dosage_rules import get_session_structure
+    
+    limits = get_session_structure(level)
+    max_minutes = limits["max_minutes"]
+    max_exercises = limits["exercises"][1]
+    
+    row = await db.fetchrow(
+        """
+        SELECT 
+            COALESCE(SUM(EXTRACT(EPOCH FROM (COALESCE(fecha_fin, NOW()) - fecha_inicio)) / 60), 0) as total_minutes,
+            COALESCE(SUM(ejercicios_completados), 0) as total_exercises
+        FROM sesiones 
+        WHERE id_child = $1 AND DATE(fecha_inicio) = CURRENT_DATE
+        """,
         child_id,
     )
-    return count > 0  # One session per day for prototype
+    
+    if not row:
+        return False
+        
+    if row["total_minutes"] >= max_minutes or row["total_exercises"] >= max_exercises:
+        return True
+        
+    return False
 
 
 # ── POST /session/start ──
@@ -124,12 +144,10 @@ async def start_session(body: StartRequest, tutor: CurrentTutor, db: DBConn, red
         exercises_done=0,
         elapsed_minutes=0.0,
     )
-    bkt = BKTState(
+    bkt = calibrate_hito_state(
         hito_id=hito_id,
-        p_mastery=0.3,
-        p_transit=0.09,
-        p_slip=0.1,
-        p_guess=0.2,
+        detected_level=level,
+        hito_level=next_hito.nivel if next_hito else level,
     )
     await state_mgr.save_bkt_state(str(child_id), bkt)
     await state_mgr.save_session_context(str(child_id), ctx)
@@ -190,15 +208,16 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
 
     # ── 1. STT ──
     transcript = ""
-    if body.tipo_respuesta == "audio" and body.audio_base64:
+    is_low_conf = False
+    if body.transcript:
+        transcript = body.transcript
+    elif body.tipo_respuesta == "audio" and body.audio_base64:
         stt_result = await _stt.transcribe_base64(
             body.audio_base64,
             expected_text=body.texto_esperado,
         )
         transcript = stt_result.transcript
         is_low_conf = stt_result.is_low_confidence
-    else:
-        is_low_conf = False
 
     # ── 2. Metrics ──
     ipf = None
@@ -252,7 +271,6 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
         ctx.consecutive_timeouts += 1
     ctx.exercises_done += 1
 
-    await state_mgr.save_bkt_state(child_id, bkt)
     await state_mgr.save_session_context(child_id, ctx)
 
     if body.id_recurso:
@@ -271,6 +289,18 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
         )
         if should_enqueue(bkt.p_mastery):
             await sr_mgr.enqueue_hito(child_id, body.id_hito)
+
+    next_hito_id = getattr(decision, "next_hito_id", None) or (bkt.hito_id if bkt else None)
+
+    if next_hito_id and next_hito_id != bkt.hito_id:
+        new_hito_level = getattr(decision, "target_level", None) or level
+        bkt = calibrate_hito_state(
+            hito_id=next_hito_id,
+            detected_level=level,
+            hito_level=new_hito_level
+        )
+
+    await state_mgr.save_bkt_state(child_id, bkt)
 
     from services.content_engine import Plantilla
     try:

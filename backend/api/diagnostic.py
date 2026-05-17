@@ -36,6 +36,7 @@ class ResponseRequest(BaseModel):
     id_seleccionado: str | None = None
     tra_ms: int = 0
     audio_base64: str | None = None
+    is_correct: bool | None = None
 
 
 
@@ -206,6 +207,7 @@ async def respond_diagnostic(body: ResponseRequest, tutor: CurrentTutor, db: DBC
         correct_id=correct_id,
         tra_ms=body.tra_ms,
         is_timeout=(body.tra_ms > 10000),
+        is_correct_override=body.is_correct,
     )
 
     step_result = evaluate_diagnostic_response(state, response)
