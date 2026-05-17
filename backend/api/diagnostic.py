@@ -229,7 +229,10 @@ async def respond_diagnostic(body: ResponseRequest, tutor: CurrentTutor, db: DBC
             child_id, nivel,
             diag_result["total_interactions"],
             diag_result["exit_reason"].value if hasattr(diag_result["exit_reason"], "value") else str(diag_result["exit_reason"]),
-            json.dumps([]),
+            json.dumps([{
+                **asdict(h), 
+                "difficulty": h.difficulty.value if hasattr(h.difficulty, "value") else h.difficulty
+            } for h in diag_result["history"]]),
         )
 
         await redis.delete(_diag_key(body.session_diag_id))
