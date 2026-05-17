@@ -243,7 +243,7 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
     mastered = await _get_mastered_ids(UUID(child_id), db)
 
     sem_score = None
-    if body.plantilla in ("Narrador", "Pensador") and transcript:
+    if body.plantilla.lower() in ("narrador", "pensador") and transcript:
         from inference_engine.metrics.llm_evaluator import LLMEvaluator
         evaluator = LLMEvaluator(api_key=settings.gemini_api_key)
         sem_score = await evaluator.evaluate_narration(
@@ -261,10 +261,10 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
     )
 
     # ── 4. Update session context ──
-    if decision.action in (EngineAction.ADVANCE,):
+    if decision.action in (EngineAction.ADVANCE, EngineAction.MINIGAME):
         ctx.consecutive_correct += 1
         ctx.consecutive_errors = 0
-    elif metrics.ipf is not None and metrics.ipf < 60:
+    elif decision.action not in (EngineAction.ADVANCE, EngineAction.MINIGAME):
         ctx.consecutive_errors += 1
         ctx.consecutive_correct = 0
     if body.es_timeout:
@@ -323,6 +323,24 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
         body.es_timeout,
     )
 
+    siguiente_ejercicio = None
+    target_level = getattr(decision, "target_level", None) or level
+    
+    if decision.action != EngineAction.END_SESSION:
+        next_hito_id = getattr(decision, "next_hito_id", None) or (bkt.hito_id if bkt else None)
+        pool = request.app.state.pool
+        content = ContentEngine(pool)
+        used_resource_ids = await state_mgr.get_used_resources(child_id)
+        next_plantilla = _pick_plantilla_for_level(target_level, decision.hardware_override)
+        next_exercise_payload = await content.pick_exercise(
+            target_level, next_plantilla, used_resource_ids, id_hito=next_hito_id,
+        )
+        
+        if next_exercise_payload is None:
+            decision.action = EngineAction.END_SESSION
+        else:
+            siguiente_ejercicio = _exercise_payload_to_dict(next_exercise_payload, next_hito_id)
+
     # ── 7. End session? ──
     if decision.action == EngineAction.END_SESSION:
         ipf_avg = await db.fetchval(
@@ -349,18 +367,6 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
             "avatar_mensaje": "¡Lo hiciste increíble hoy! Descansa y mañana seguimos.",
         }
 
-    next_hito_id = getattr(decision, "next_hito_id", None) or (bkt.hito_id if bkt else None)
-
-    pool = request.app.state.pool
-    content = ContentEngine(pool)
-    used_resource_ids = await state_mgr.get_used_resources(child_id)
-    next_plantilla = _pick_plantilla_for_level(level, decision.hardware_override)
-    next_exercise_payload = await content.pick_exercise(
-        level, next_plantilla, used_resource_ids, id_hito=next_hito_id,
-    )
-
-    siguiente_ejercicio = _exercise_payload_to_dict(next_exercise_payload, next_hito_id) if next_exercise_payload else None
-
     return {
         "estado_sesion": "EN_CURSO",
         "decision_motor": {
@@ -373,7 +379,7 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
             },
             "hardware_override": decision.hardware_override.value if decision.hardware_override else None,
         },
-        "next_hito_id": next_hito_id,
+        "next_hito_id": getattr(decision, "next_hito_id", None) or (bkt.hito_id if bkt else None),
         "siguiente_ejercicio": siguiente_ejercicio,
         "avatar_mensaje": _avatar_message(decision.action),
     }
