@@ -87,6 +87,10 @@ class RedisStateManager:
             await self._r.sismember(self._used_key(child_id), resource_id)
         )
 
+    async def get_used_resources(self, child_id: str) -> set[str]:
+        members = await self._r.smembers(self._used_key(child_id))
+        return {m.decode() if isinstance(m, bytes) else m for m in members}
+
     # ── Session Cleanup ──
     async def clear_session(self, child_id: str) -> None:
         keys = [
