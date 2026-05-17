@@ -235,7 +235,7 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
         ipf=ipf,
         lme=lme,
         is_low_confidence=is_low_conf,
-        is_timeout=body.es_timeout,
+        is_timeout=body.es_timeout or (body.tra_ms > 10000),
     )
 
     # ── 3. Inference ──
@@ -319,13 +319,19 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
         session_id,
         body.id_recurso, body.id_hito, body.plantilla, hw_req,
         lme, ipf, body.tra_ms,
-        decision.action == EngineAction.ADVANCE,
-        body.es_timeout,
+        decision.action in (EngineAction.ADVANCE, EngineAction.MINIGAME),
+        body.es_timeout or (body.tra_ms > 10000),
     )
 
     siguiente_ejercicio = None
     target_level = getattr(decision, "target_level", None) or level
     
+    if target_level != level:
+        await db.execute(
+            "UPDATE sesiones SET nivel_sesion = $1 WHERE id_sesion = $2",
+            target_level, session_id
+        )
+
     if decision.action != EngineAction.END_SESSION:
         next_hito_id = getattr(decision, "next_hito_id", None) or (bkt.hito_id if bkt else None)
         pool = request.app.state.pool
