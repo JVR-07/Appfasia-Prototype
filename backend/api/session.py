@@ -1,7 +1,7 @@
 from uuid import UUID, uuid4
 
 import asyncpg
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from core.config import settings
@@ -79,7 +79,7 @@ async def _check_daily_limit(child_id: UUID, db: asyncpg.Connection, level: int)
 # ── POST /session/start ──
 
 @router.post("/start")
-async def start_session(body: StartRequest, tutor: CurrentTutor, db: DBConn, redis: RedisConn, navigator: Navigator):
+async def start_session(body: StartRequest, tutor: CurrentTutor, db: DBConn, redis: RedisConn, navigator: Navigator, request: Request):
     child_id = UUID(body.child_id)
     child = await db.fetchrow(
         "SELECT * FROM children WHERE id_child = $1 AND id_tutor = $2",
@@ -94,7 +94,6 @@ async def start_session(body: StartRequest, tutor: CurrentTutor, db: DBConn, red
     level = child["nivel_actual"]
 
     if await _check_daily_limit(child_id, db, level):
-        from datetime import timedelta
         raise HTTPException(
             status_code=403,
             detail={
@@ -107,9 +106,13 @@ async def start_session(body: StartRequest, tutor: CurrentTutor, db: DBConn, red
     mastered = await _get_mastered_ids(child_id, db)
     next_hito = await navigator.get_next_optimal_hito(mastered, level)
 
-    content = ContentEngine(db._con._protocol._transport._extra.get("pool", None))  # injected below
-    # Use a global pool reference instead
-    exercise = None
+    hito_id = next_hito.id_hito if next_hito else "UNKNOWN"
+
+    pool = request.app.state.pool
+    content = ContentEngine(pool)
+    used_ids: set[str] = set()
+    plantilla = _pick_plantilla_for_level(level)
+    exercise_payload = await content.pick_exercise(level, plantilla, used_ids, id_hito=hito_id)
 
     # Store session state in Redis
     state_mgr = RedisStateManager(redis)
@@ -122,7 +125,7 @@ async def start_session(body: StartRequest, tutor: CurrentTutor, db: DBConn, red
         elapsed_minutes=0.0,
     )
     bkt = BKTState(
-        hito_id=next_hito.id_hito if next_hito else "UNKNOWN",
+        hito_id=hito_id,
         p_mastery=0.3,
         p_transit=0.09,
         p_slip=0.1,
@@ -143,11 +146,14 @@ async def start_session(body: StartRequest, tutor: CurrentTutor, db: DBConn, red
     # Store active session pointer in Redis
     await redis.setex(_sess_key(str(child_id)), _SESION_TTL, session_id)
 
+    ejercicio_actual = _exercise_payload_to_dict(exercise_payload, hito_id) if exercise_payload else None
+
     return {
         "session_id": session_id,
         "child_id": str(child_id),
         "nivel_sesion": level,
-        "hito_actual": next_hito.id_hito if next_hito else None,
+        "hito_actual": hito_id,
+        "ejercicio_actual": ejercicio_actual,
         "avatar_mensaje": f"¡Hola, {child['nombre']}! ¿Lista para jugar?",
     }
 
@@ -155,7 +161,7 @@ async def start_session(body: StartRequest, tutor: CurrentTutor, db: DBConn, red
 # ── POST /session/response ──
 
 @router.post("/response")
-async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBConn, redis: RedisConn, navigator: Navigator):
+async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBConn, redis: RedisConn, navigator: Navigator, request: Request):
     session_id = UUID(body.session_id)
     session_row = await db.fetchrow(
         """
@@ -306,7 +312,18 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
             "avatar_mensaje": "¡Lo hiciste increíble hoy! Descansa y mañana seguimos.",
         }
 
-    next_hito_id = getattr(decision, "next_hito_id", None)
+    next_hito_id = getattr(decision, "next_hito_id", None) or (bkt.hito_id if bkt else None)
+
+    pool = request.app.state.pool
+    content = ContentEngine(pool)
+    used_resource_ids = await state_mgr.get_used_resources(child_id)
+    next_plantilla = _pick_plantilla_for_level(level, decision.hardware_override)
+    next_exercise_payload = await content.pick_exercise(
+        level, next_plantilla, used_resource_ids, id_hito=next_hito_id,
+    )
+
+    siguiente_ejercicio = _exercise_payload_to_dict(next_exercise_payload, next_hito_id) if next_exercise_payload else None
+
     return {
         "estado_sesion": "EN_CURSO",
         "decision_motor": {
@@ -320,6 +337,7 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
             "hardware_override": decision.hardware_override.value if decision.hardware_override else None,
         },
         "next_hito_id": next_hito_id,
+        "siguiente_ejercicio": siguiente_ejercicio,
         "avatar_mensaje": _avatar_message(decision.action),
     }
 
@@ -334,6 +352,40 @@ def _avatar_message(action: EngineAction) -> str:
         EngineAction.END_SESSION: "¡Hasta mañana!",
     }
     return messages.get(action, "¡Sigue así!")
+
+
+def _pick_plantilla_for_level(level: int, hardware_override=None) -> "Plantilla":
+    """Select an appropriate template based on level and optional hardware override."""
+    from services.content_engine import Plantilla
+    if hardware_override and hardware_override.value == "T-S":
+        return Plantilla.IDENTIFICADOR
+    templates_by_level: dict[int, list[Plantilla]] = {
+        1: [Plantilla.IMITADOR, Plantilla.NOMBRADOR, Plantilla.IDENTIFICADOR],
+        2: [Plantilla.NOMBRADOR, Plantilla.IDENTIFICADOR, Plantilla.IMITADOR],
+        3: [Plantilla.NOMBRADOR, Plantilla.IDENTIFICADOR, Plantilla.COMPLETADOR, Plantilla.CONSTRUCTOR],
+        4: [Plantilla.NOMBRADOR, Plantilla.CONSTRUCTOR, Plantilla.COMPLETADOR, Plantilla.NARRADOR],
+        5: [Plantilla.NARRADOR, Plantilla.PENSADOR, Plantilla.CONSTRUCTOR],
+    }
+    import random
+    options = templates_by_level.get(level, [Plantilla.NOMBRADOR])
+    return random.choice(options)
+
+
+def _exercise_payload_to_dict(payload, hito_id: str | None) -> dict:
+    """Convert ContentEngine ExercisePayload to frontend-consumable dict."""
+    if payload is None:
+        return None
+    return {
+        "id_actividad": payload.id_actividad,
+        "plantilla": payload.plantilla.value if hasattr(payload.plantilla, 'value') else payload.plantilla,
+        "hardware_req": payload.hardware_req,
+        "id_recurso": payload.id_recurso,
+        "id_hito": hito_id,
+        "texto_esperado": payload.texto_esperado,
+        "prompt": payload.prompt,
+        "opciones": payload.opciones,
+        "umbrales": payload.umbrales,
+    }
 
 
 # ── GET /session/current/{child_id} ──
