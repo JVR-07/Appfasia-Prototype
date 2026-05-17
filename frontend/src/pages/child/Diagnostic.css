@@ -1,7 +1,7 @@
 .diagnostic-intro-container {
   display: flex;
-  justifycontent: center;
-  alignitems: center;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
   background-color: var(--color-bg);
   padding: 1rem;

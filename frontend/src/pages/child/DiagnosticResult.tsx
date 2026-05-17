@@ -17,9 +17,7 @@ export const DiagnosticResult = () => {
 
     const loadResult = async () => {
       try {
-        const res = await diagnosticService.getDiagnosticResult(
-          activeChild.id_child,
-        );
+        const res = await diagnosticService.getResult(activeChild.id_child);
         setResult(res);
       } catch (e) {
         console.error("No se pudo cargar el resultado", e);
