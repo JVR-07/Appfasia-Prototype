@@ -3,6 +3,7 @@ import { NamingExercise } from "./NamingExercise";
 import { RepetitionExercise } from "./RepetitionExercise";
 import { MatchExercise } from "./MatchExercise";
 import { ConstructorExercise } from "./ConstructorExercise";
+import { NarratorExercise } from "./NarratorExercise";
 import "./Exercises.css";
 
 import type { ActivityInstance, ActivityResult } from "./types";
@@ -37,6 +38,7 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
   const handleComplete = async (
     isCorrect: boolean,
     idSeleccionado?: string,
+    transcript?: string,
   ) => {
     if (!currentActivity) return;
 
@@ -47,6 +49,8 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
       timeTakenMs,
       attempts: attempts + 1,
       idSeleccionado,
+      transcript,
+      plantilla: currentActivity.plantilla,
     };
 
     setIsLoadingNext(true);
@@ -144,6 +148,15 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
             key={currentActivity.id}
             activity={currentActivity}
             onSuccess={(finalSentence) => handleComplete(true, finalSentence)}
+            onFail={handleFailAttempt}
+          />
+        )}
+
+        {(currentActivity.type === "narrator" || currentActivity.type === "thinker") && (
+          <NarratorExercise
+            key={currentActivity.id}
+            activity={currentActivity}
+            onSuccess={(transcript) => handleComplete(true, undefined, transcript)}
             onFail={handleFailAttempt}
           />
         )}

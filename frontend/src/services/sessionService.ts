@@ -21,6 +21,7 @@ export interface SessionResponseBody {
   plantilla: string;
   tra_ms?: number;
   es_timeout?: boolean;
+  transcript?: string;
 }
 
 export interface SessionStepResult {
