@@ -272,6 +272,13 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
         if should_enqueue(bkt.p_mastery):
             await sr_mgr.enqueue_hito(child_id, body.id_hito)
 
+    from services.content_engine import Plantilla
+    try:
+        plantilla_enum = Plantilla(body.plantilla)
+        hw_req = plantilla_enum.hardware_req
+    except Exception:
+        hw_req = "V-M"
+
     # ── 6. Log result ──
     await db.execute(
         """
@@ -280,7 +287,7 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         """,
         session_id,
-        body.id_recurso, body.id_hito, body.plantilla, "V-M",
+        body.id_recurso, body.id_hito, body.plantilla, hw_req,
         lme, ipf, body.tra_ms,
         decision.action == EngineAction.ADVANCE,
         body.es_timeout,
