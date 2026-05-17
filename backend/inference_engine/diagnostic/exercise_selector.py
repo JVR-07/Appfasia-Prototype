@@ -51,6 +51,16 @@ async def select_diagnostic_exercise(
     P(G) = 1/3 = 0.33
     """
     correct = await repo.fetch_resource(level, difficulty, used_items)
+
+    if level >= 4:
+        return ActivityInstance(
+            template="Expresion",
+            hardware_req="M-A",
+            prompt_audio_url=correct.get("audio_url", ""),
+            options= [correct],
+            correct_resource_id=correct["id_recurso"]
+        )
+
     distractors = await repo.fetch_distractors(
         level, correct["id_recurso"], used_items, count=2
     )

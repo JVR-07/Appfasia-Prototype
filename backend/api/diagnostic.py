@@ -120,12 +120,22 @@ def _exercise_to_frontend(exercise, state: DiagnosticState) -> dict:
             "imagen_url": opt.get("imagen_url", ""),
         })
 
+    tipo_interaccion = "seleccion"
+    if exercise.hardware_req == "M-A" or exercise.hardware_req == "T-A":
+        tipo_interaccion = "audio"
+
+    consigna = "Responde"
+    if tipo_interaccion == "seleccion" and options:
+        consigna = f"Toca: {options[0]['texto']}"
+    elif tipo_interaccion == "audio":
+        consigna = "¿Qué es esto? Dilo en voz alta"
+
     return {
         "id_recurso": exercise.correct_resource_id,
         "plantilla": exercise.template,
         "hardware_req": exercise.hardware_req,
-        "tipo_interaccion": "seleccion",
-        "consigna": f"Toca: {options[0]['texto']}" if options else "Responde",
+        "tipo_interaccion": tipo_interaccion,
+        "consigna": consigna,
         "texto_esperado": exercise.correct_resource_id,
         "imagen_url": exercise.options[0].get("imagen_url", "") if exercise.options else "",
         "opciones": options,
