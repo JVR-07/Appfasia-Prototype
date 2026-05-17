@@ -10,7 +10,7 @@ declare global {
 
 interface NamingExerciseProps {
   activity: ActivityInstance;
-  onSuccess: () => void;
+  onSuccess: (transcript?: string) => void;
   onFail: () => void;
 }
 
@@ -48,7 +48,7 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
         console.log(`Escuchado: "${transcript}", Esperado: "${target}"`);
 
         if (transcript.includes(target) || target.includes(transcript)) {
-          onSuccess();
+          onSuccess(transcript);
         } else {
           onFail();
           alert(
@@ -103,7 +103,7 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
     const cleanTyped = typedWord.toLowerCase().trim();
     const cleanTarget = getTargetText().toLowerCase().trim();
     if (cleanTyped === cleanTarget || cleanTarget.includes(cleanTyped)) {
-      onSuccess();
+      onSuccess(cleanTyped);
     } else {
       onFail();
       alert(`¡Uy! Intentemos de nuevo. Debías decir "${getTargetText()}".`);
@@ -223,7 +223,7 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
                 type="button" 
                 className="option-btn" 
                 style={{ minWidth: "auto", margin: 0, padding: "0.5rem 1rem", fontSize: "0.9rem", backgroundColor: "#38bdf8", color: "white", borderColor: "#0284c7", boxShadow: "0 4px 0 #0284c7" }}
-                onClick={onSuccess}
+                onClick={() => onSuccess(getTargetText())}
               >
                 ✨ Simular Éxito
               </button>
