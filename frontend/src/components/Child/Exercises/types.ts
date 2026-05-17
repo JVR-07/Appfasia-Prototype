@@ -1,13 +1,13 @@
-export type ActivityType = "naming" | "repetition" | "match";
+export type ActivityType = "naming" | "repetition" | "match" | "constructor";
 
 export interface ActivityInstance {
   id: string;
-  type: ActivityType;
+  type: "naming" | "repetition" | "match" | "constructor";
   title: string;
   subtitle: string;
+  targetWord: string;
   imageUrl?: string;
   audioUrl?: string;
-  targetWord: string;
   options?: { id: string; label: string; imageUrl?: string }[];
 }
 
@@ -16,4 +16,5 @@ export interface ActivityResult {
   isCorrect: boolean;
   timeTakenMs: number;
   attempts: number;
+  idSeleccionado?: string;
 }

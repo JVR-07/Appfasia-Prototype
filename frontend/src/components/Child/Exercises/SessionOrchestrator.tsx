@@ -2,44 +2,68 @@ import React, { useState, useEffect } from "react";
 import { NamingExercise } from "./NamingExercise";
 import { RepetitionExercise } from "./RepetitionExercise";
 import { MatchExercise } from "./MatchExercise";
+import { ConstructorExercise } from "./ConstructorExercise";
 import "./Exercises.css";
 
-import type { ActivityType, ActivityInstance, ActivityResult } from "./types";
+import type { ActivityInstance, ActivityResult } from "./types";
 
 interface SessionOrchestratorProps {
-  activities: ActivityInstance[];
-  onSessionComplete: (results: ActivityResult[]) => void;
+  initialActivity: ActivityInstance;
+  totalActivities?: number;
+  onExerciseComplete: (
+    result: ActivityResult,
+  ) => Promise<ActivityInstance | null>;
+  onSessionComplete?: () => void;
 }
 
 export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
-  activities,
+  initialActivity,
+  totalActivities = 15,
+  onExerciseComplete,
   onSessionComplete,
 }) => {
+  const [currentActivity, setCurrentActivity] =
+    useState<ActivityInstance | null>(initialActivity);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [results, setResults] = useState<ActivityResult[]>([]);
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [attempts, setAttempts] = useState(0);
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
 
   useEffect(() => {
     setStartTime(Date.now());
     setAttempts(0);
-  }, [currentIndex]);
+  }, [currentActivity]);
 
-  const handleComplete = (isCorrect: boolean) => {
+  const handleComplete = async (
+    isCorrect: boolean,
+    idSeleccionado?: string,
+  ) => {
+    if (!currentActivity) return;
+
     const timeTakenMs = Date.now() - startTime;
-    const newResult = {
+    const result: ActivityResult = {
       activityId: currentActivity.id,
       isCorrect,
       timeTakenMs,
       attempts: attempts + 1,
+      idSeleccionado,
     };
 
-    setResults((prev) => [...prev, newResult]);
-
-    if (currentIndex < activities.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      onSessionComplete([...results, newResult]);
+    setIsLoadingNext(true);
+    try {
+      const nextActivity = await onExerciseComplete(result);
+      if (nextActivity) {
+        setCurrentActivity(nextActivity);
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        setCurrentActivity(null);
+        if (onSessionComplete) onSessionComplete();
+      }
+    } catch (e) {
+      console.error("Error al obtener siguiente actividad", e);
+      alert("Hubo un error al cargar la siguiente actividad.");
+    } finally {
+      setIsLoadingNext(false);
     }
   };
 
@@ -47,11 +71,23 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
     setAttempts((prev) => prev + 1);
   };
 
-  if (!activities || activities.length === 0)
-    return <div>No hay ejercicios</div>;
+  if (!currentActivity) {
+    return (
+      <div
+        className="orchestrator-container"
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
+        <h2 style={{ color: "var(--color-primary)" }}>¡Sesión completada!</h2>
+      </div>
+    );
+  }
 
-  const currentActivity = activities[currentIndex];
-  const progress = (currentIndex / activities.length) * 100;
+  const progress = Math.min((currentIndex / totalActivities) * 100, 100);
 
   return (
     <div className="orchestrator-container">
@@ -60,18 +96,25 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
           <div className="progress-bar-bg">
             <div
               className="progress-bar-fill"
-              style={{ width: `${progress}%` }}
+              style={{
+                width: `${progress}%`,
+                transition: "width 0.3s ease-in-out",
+              }}
             ></div>
           </div>
         </div>
         <div className="stat-pill">
-          Ejercicio {currentIndex + 1} / {activities.length}
+          {isLoadingNext ? "Cargando..." : `Ejercicio ${currentIndex + 1}`}
         </div>
       </header>
 
-      <main className="orchestrator-main">
+      <main
+        className="orchestrator-main"
+        style={{ opacity: isLoadingNext ? 0.5 : 1, transition: "opacity 0.2s" }}
+      >
         {currentActivity.type === "naming" && (
           <NamingExercise
+            key={currentActivity.id}
             activity={currentActivity}
             onSuccess={() => handleComplete(true)}
             onFail={handleFailAttempt}
@@ -80,6 +123,7 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
 
         {currentActivity.type === "repetition" && (
           <RepetitionExercise
+            key={currentActivity.id}
             activity={currentActivity}
             onSuccess={() => handleComplete(true)}
             onFail={handleFailAttempt}
@@ -88,8 +132,18 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
 
         {currentActivity.type === "match" && (
           <MatchExercise
+            key={currentActivity.id}
             activity={currentActivity}
-            onSuccess={() => handleComplete(true)}
+            onSuccess={(idSelected) => handleComplete(true, idSelected)}
+            onFail={handleFailAttempt}
+          />
+        )}
+
+        {currentActivity.type === "constructor" && (
+          <ConstructorExercise
+            key={currentActivity.id}
+            activity={currentActivity}
+            onSuccess={(finalSentence) => handleComplete(true, finalSentence)}
             onFail={handleFailAttempt}
           />
         )}

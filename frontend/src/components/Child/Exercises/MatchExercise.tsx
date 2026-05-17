@@ -3,7 +3,7 @@ import type { ActivityInstance } from "./types";
 
 interface MatchExerciseProps {
   activity: ActivityInstance;
-  onSuccess: () => void;
+  onSuccess: (idSeleccionado: string) => void;
   onFail: () => void;
 }
 
@@ -14,7 +14,7 @@ export const MatchExercise: React.FC<MatchExerciseProps> = ({
 }) => {
   const handleOptionClick = (optionId: string) => {
     if (optionId === activity.targetWord) {
-      onSuccess();
+      onSuccess(optionId);
     } else {
       onFail();
       alert("¡Uy! Esa no es. Intenta de nuevo.");
