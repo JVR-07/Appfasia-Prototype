@@ -6,6 +6,8 @@ import {
 } from "react-router-dom";
 import { AuthPage } from "./pages/parent/AuthPage";
 import { Dashboard } from "./pages/parent/Dashboard";
+import { DiagnosticExam } from "./pages/child/DiagnosticExam";
+import { ChildPath } from "./pages/child/ChildPath";
 import { useAuthStore } from "./store/useAuthStore";
 import "./App.css";
 
@@ -24,6 +26,22 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/child/diagnostic"
+          element={
+            <ProtectedRoute>
+              <DiagnosticExam />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/child/path"
+          element={
+            <ProtectedRoute>
+              <ChildPath />
             </ProtectedRoute>
           }
         />
