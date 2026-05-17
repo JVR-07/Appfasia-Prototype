@@ -8,6 +8,7 @@ from api.diagnostic import router as diagnostic_router
 from api.session import router as session_router
 from api.progress import router as progress_router
 from api.chatbot import router as chatbot_router
+from api.publications import router as publications_router
 
 app = FastAPI(
     title="Appfasia API",
@@ -32,6 +33,7 @@ app.include_router(diagnostic_router, prefix=f"{PREFIX}/diagnostic", tags=["Diag
 app.include_router(session_router,    prefix=f"{PREFIX}/session",    tags=["Session"])
 app.include_router(progress_router,   prefix=f"{PREFIX}/progress",   tags=["Progress"])
 app.include_router(chatbot_router,    prefix=f"{PREFIX}/chatbot",    tags=["Chatbot"])
+app.include_router(publications_router, prefix=f"{PREFIX}/publications", tags=["Publications"])
 
 
 @app.get("/health", tags=["Health"])
