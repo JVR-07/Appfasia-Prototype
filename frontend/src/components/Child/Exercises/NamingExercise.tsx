@@ -25,6 +25,13 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
   const [showKeyboard, setShowKeyboard] = useState(false);
   const recognitionRef = useRef<any>(null);
 
+  const getTargetText = () => {
+    const matchedOption = activity.options?.find(
+      (opt) => opt.id === activity.targetWord
+    );
+    return matchedOption ? matchedOption.label : activity.targetWord;
+  };
+
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -36,7 +43,7 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
 
       recognitionRef.current.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript.toLowerCase().trim();
-        const target = activity.targetWord.toLowerCase().trim();
+        const target = getTargetText().toLowerCase().trim();
 
         console.log(`Escuchado: "${transcript}", Esperado: "${target}"`);
 
@@ -74,7 +81,7 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
         recognitionRef.current.stop();
       }
     };
-  }, [activity.targetWord, onSuccess, onFail]);
+  }, [activity.targetWord, activity.options, onSuccess, onFail]);
 
   const toggleListen = () => {
     setMicError(null);
@@ -94,12 +101,12 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
   const handleTextSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanTyped = typedWord.toLowerCase().trim();
-    const cleanTarget = activity.targetWord.toLowerCase().trim();
+    const cleanTarget = getTargetText().toLowerCase().trim();
     if (cleanTyped === cleanTarget || cleanTarget.includes(cleanTyped)) {
       onSuccess();
     } else {
       onFail();
-      alert(`¡Uy! Intentemos de nuevo. Debías decir "${activity.targetWord}".`);
+      alert(`¡Uy! Intentemos de nuevo. Debías decir "${getTargetText()}".`);
     }
     setTypedWord("");
   };
@@ -113,12 +120,12 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
         {activity.imageUrl ? (
           <img
             src={activity.imageUrl}
-            alt={activity.targetWord}
+            alt={getTargetText()}
             className="exercise-image"
           />
         ) : (
           <div className="exercise-image">
-            {activity.targetWord.charAt(0).toUpperCase()}
+            {getTargetText().charAt(0).toUpperCase()}
           </div>
         )}
       </div>

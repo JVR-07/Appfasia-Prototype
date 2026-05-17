@@ -18,6 +18,13 @@ export const RepetitionExercise: React.FC<RepetitionExerciseProps> = ({
   const [showKeyboard, setShowKeyboard] = useState(false);
   const recognitionRef = useRef<any>(null);
 
+  const getTargetText = () => {
+    const matchedOption = activity.options?.find(
+      (opt) => opt.id === activity.targetWord
+    );
+    return matchedOption ? matchedOption.label : activity.targetWord;
+  };
+
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -29,7 +36,7 @@ export const RepetitionExercise: React.FC<RepetitionExerciseProps> = ({
 
       recognitionRef.current.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript.toLowerCase().trim();
-        const target = activity.targetWord.toLowerCase().trim();
+        const target = getTargetText().toLowerCase().trim();
 
         if (transcript.includes(target) || target.includes(transcript)) {
           onSuccess();
@@ -65,7 +72,7 @@ export const RepetitionExercise: React.FC<RepetitionExerciseProps> = ({
         recognitionRef.current.stop();
       }
     };
-  }, [activity.targetWord, onSuccess, onFail]);
+  }, [activity.targetWord, activity.options, onSuccess, onFail]);
 
   const toggleListen = () => {
     setMicError(null);
@@ -83,7 +90,7 @@ export const RepetitionExercise: React.FC<RepetitionExerciseProps> = ({
   };
 
   const playAudio = () => {
-    const utterance = new SpeechSynthesisUtterance(activity.targetWord);
+    const utterance = new SpeechSynthesisUtterance(getTargetText());
     utterance.lang = "es-MX";
     utterance.rate = 0.8;
     window.speechSynthesis.speak(utterance);
@@ -92,12 +99,12 @@ export const RepetitionExercise: React.FC<RepetitionExerciseProps> = ({
   const handleTextSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const cleanTyped = typedWord.toLowerCase().trim();
-    const cleanTarget = activity.targetWord.toLowerCase().trim();
+    const cleanTarget = getTargetText().toLowerCase().trim();
     if (cleanTyped === cleanTarget || cleanTarget.includes(cleanTyped)) {
       onSuccess();
     } else {
       onFail();
-      alert(`¡Uy! Intentemos de nuevo. Debías repetir "${activity.targetWord}".`);
+      alert(`¡Uy! Intentemos de nuevo. Debías repetir "${getTargetText()}".`);
     }
     setTypedWord("");
   };
