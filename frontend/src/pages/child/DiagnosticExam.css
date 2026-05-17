@@ -1,0 +1,232 @@
+/* ================== General Layout ================== */
+.diagnostic-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-kids);
+}
+
+/* ================== Header Stats ================== */
+.diagnostic-header {
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border-bottom: 3px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: var(--radius-pill);
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--color-primary);
+  border: 2px solid #e0f2fe;
+  box-shadow: 0 4px 0 #bae6fd;
+}
+
+.stat-badge span.icon {
+  font-size: 1.5rem;
+}
+
+.progress-bar-container {
+  flex: 1;
+  margin: 0 2rem;
+  max-width: 400px;
+}
+
+.progress-bar-bg {
+  height: 20px;
+  background-color: white;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid #e0f2fe;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-success) 0%, #4ade80 100%);
+  border-radius: 10px;
+  transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ================== Exercise Area ================== */
+.exercise-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.exercise-card {
+  background-color: white;
+  width: 100%;
+  max-width: 800px;
+  border-radius: 30px;
+  padding: 3rem 2rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  position: relative;
+  border: 4px solid #fff;
+  animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.exercise-title {
+  font-size: 2rem;
+  color: var(--color-text-main);
+  margin-bottom: 0.5rem;
+  font-weight: 900;
+}
+
+.exercise-subtitle {
+  font-size: 1.2rem;
+  color: var(--color-text-muted);
+  margin-bottom: 3rem;
+}
+
+/* ================== Templates ================== */
+.template-naming .image-placeholder {
+  width: 250px;
+  height: 250px;
+  background-color: #f1f5f9;
+  border: 4px dashed #cbd5e1;
+  border-radius: 20px;
+  margin: 0 auto 2rem auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+}
+
+.template-repetition .audio-btn {
+  width: 120px;
+  height: 120px;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  border: none;
+  color: white;
+  font-size: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 3rem auto;
+  cursor: pointer;
+  box-shadow: 0 8px 0 #0284c7;
+  transition: all 0.2s;
+}
+
+.template-repetition .audio-btn:active {
+  transform: translateY(8px);
+  box-shadow: 0 0 0 #0284c7;
+}
+
+.template-match {
+  display: flex;
+  justify-content: space-around;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.match-item {
+  width: 150px;
+  height: 150px;
+  background-color: white;
+  border: 3px solid #e2e8f0;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+/* ================== Controls ================== */
+.mic-btn-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.mic-btn {
+  background-color: var(--color-error);
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    0 8px 0 #be123c,
+    0 15px 30px rgba(225, 29, 72, 0.4);
+  transition: all 0.2s;
+}
+
+.mic-btn:hover {
+  transform: scale(1.05);
+}
+
+.mic-btn:active {
+  transform: translateY(8px) scale(0.95);
+  box-shadow: 0 0 0 #be123c;
+}
+
+.next-btn {
+  background-color: var(--color-success);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: 1.2rem 3rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 0 #16a34a;
+  transition: all 0.2s;
+  margin-top: 2rem;
+}
+
+.next-btn:active {
+  transform: translateY(6px);
+  box-shadow: 0 0 0 #16a34a;
+}
+
+@media (max-width: 768px) {
+  .diagnostic-header {
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+    justify-content: center;
+  }
+  .progress-bar-container {
+    order: -1;
+    width: 100%;
+    margin: 0 0 1rem 0;
+  }
+  .exercise-card {
+    padding: 2rem 1rem;
+  }
+}
