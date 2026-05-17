@@ -116,3 +116,18 @@ async def count_results(conn: asyncpg.Connection, session_id: UUID) -> int:
         "SELECT COUNT(*) FROM resultados_ejercicio WHERE id_sesion = $1",
         session_id,
     )
+
+async def get_weekly_stats(conn: asyncpg.Connection, child_id: UUID) -> dict | None:
+    row = await conn.fetchrow(
+        """
+        SELECT 
+            COUNT(*) AS sesiones_completadas,
+            ROUND(AVG(ipf_promedio)::numeric, 1) AS ipf_avg
+        FROM sesiones 
+        WHERE id_child = $1 
+          AND estado = 'COMPLETADA' 
+          AND fecha_inicio >= NOW() - INTERVAL '7 days'
+        """,
+        child_id,
+    )
+    return dict(row) if row else None
