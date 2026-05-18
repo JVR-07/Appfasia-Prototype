@@ -15,13 +15,13 @@ export const ChildPath = () => {
 
     if (!activeProgress) return defaultNodes;
 
-    const dominados = activeProgress.resumen_semana?.hitos_dominados || 0;
+    const sesiones = activeProgress.resumen_semana?.sesiones_completadas || 0;
 
     const nodes = [
       { id: 1, type: "start", title: "Inicio", status: "completed" },
     ];
 
-    for (let i = 0; i < dominados; i++) {
+    for (let i = 0; i < sesiones; i++) {
       nodes.push({
         id: 2 + i,
         type: "lesson",
@@ -30,7 +30,7 @@ export const ChildPath = () => {
       });
     }
 
-    if (dominados >= 2) {
+    if (sesiones >= 2) {
       nodes.push({
         id: nodes.length + 1,
         type: "chest",

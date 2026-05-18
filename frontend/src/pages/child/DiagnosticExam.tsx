@@ -157,6 +157,7 @@ export const DiagnosticExam = () => {
       totalActivities={maxInteracciones}
       onExerciseComplete={handleExerciseComplete}
       onSessionComplete={handleSessionComplete}
+      isDiagnostic={true}
     />
   );
 };

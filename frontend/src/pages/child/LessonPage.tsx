@@ -54,6 +54,8 @@ export const LessonPage = () => {
       imageUrl: ejercicio.prompt?.imagen_url,
       audioUrl: ejercicio.prompt?.audio_url,
       plantilla: ejercicio.plantilla,
+      idRecurso: ejercicio.id_recurso,
+      idHito: ejercicio.id_hito,
       options: ejercicio.opciones?.map((o: any) => ({
         id: o.id,
         label: o.texto || o.id,
@@ -116,6 +118,9 @@ export const LessonPage = () => {
         id_actividad: result.activityId,
         tipo_respuesta: result.idSeleccionado ? "seleccion" : "audio",
         id_seleccionado: result.idSeleccionado,
+        texto_esperado: result.textoEsperado,
+        id_recurso: result.idRecurso,
+        id_hito: result.idHito,
         tra_ms: result.timeTakenMs,
         plantilla: result.plantilla || "Practica",
         transcript: result.transcript,
