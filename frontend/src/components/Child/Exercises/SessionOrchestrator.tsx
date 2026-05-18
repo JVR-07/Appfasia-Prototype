@@ -15,6 +15,7 @@ interface SessionOrchestratorProps {
     result: ActivityResult,
   ) => Promise<ActivityInstance | null>;
   onSessionComplete?: () => void;
+  isDiagnostic?: boolean;
 }
 
 export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
@@ -22,6 +23,7 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
   totalActivities = 15,
   onExerciseComplete,
   onSessionComplete,
+  isDiagnostic = false,
 }) => {
   const [currentActivity, setCurrentActivity] =
     useState<ActivityInstance | null>(initialActivity);
@@ -29,6 +31,9 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
   const [startTime, setStartTime] = useState<number>(Date.now());
   const [attempts, setAttempts] = useState(0);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
+  const [feedback, setFeedback] = useState<"correct" | "incorrect" | null>(
+    null,
+  );
 
   useEffect(() => {
     setStartTime(Date.now());
@@ -42,6 +47,10 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
   ) => {
     if (!currentActivity) return;
 
+    setFeedback(isCorrect ? "correct" : "incorrect");
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    setFeedback(null);
+
     const timeTakenMs = Date.now() - startTime;
     const result: ActivityResult = {
       activityId: currentActivity.id,
@@ -51,6 +60,9 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
       idSeleccionado,
       transcript,
       plantilla: currentActivity.plantilla,
+      idRecurso: currentActivity.idRecurso,
+      idHito: currentActivity.idHito,
+      textoEsperado: currentActivity.targetWord,
     };
 
     setIsLoadingNext(true);
@@ -71,8 +83,16 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
     }
   };
 
-  const handleFailAttempt = () => {
+  const handleFailAttempt = (value?: string) => {
     setAttempts((prev) => prev + 1);
+    const isAudio =
+      currentActivity?.type === "naming" ||
+      currentActivity?.type === "repetition";
+    handleComplete(
+      false,
+      isAudio ? undefined : value,
+      isAudio ? value : undefined,
+    );
   };
 
   if (!currentActivity) {
@@ -120,8 +140,11 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
           <NamingExercise
             key={currentActivity.id}
             activity={currentActivity}
-            onSuccess={(transcript) => handleComplete(true, undefined, transcript)}
+            onSuccess={(transcript) =>
+              handleComplete(true, undefined, transcript)
+            }
             onFail={handleFailAttempt}
+            feedback={feedback}
           />
         )}
 
@@ -129,8 +152,11 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
           <RepetitionExercise
             key={currentActivity.id}
             activity={currentActivity}
-            onSuccess={(transcript) => handleComplete(true, undefined, transcript)}
+            onSuccess={(transcript) =>
+              handleComplete(true, undefined, transcript)
+            }
             onFail={handleFailAttempt}
+            feedback={feedback}
           />
         )}
 
@@ -140,6 +166,7 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
             activity={currentActivity}
             onSuccess={(idSelected) => handleComplete(true, idSelected)}
             onFail={handleFailAttempt}
+            feedback={feedback}
           />
         )}
 
@@ -148,16 +175,21 @@ export const SessionOrchestrator: React.FC<SessionOrchestratorProps> = ({
             key={currentActivity.id}
             activity={currentActivity}
             onSuccess={(finalSentence) => handleComplete(true, finalSentence)}
-            onFail={handleFailAttempt}
+            onFail={() => handleFailAttempt()}
+            feedback={feedback}
           />
         )}
 
-        {(currentActivity.type === "narrator" || currentActivity.type === "thinker") && (
+        {(currentActivity.type === "narrator" ||
+          currentActivity.type === "thinker") && (
           <NarratorExercise
             key={currentActivity.id}
             activity={currentActivity}
-            onSuccess={(transcript) => handleComplete(true, undefined, transcript)}
+            onSuccess={(transcript) =>
+              handleComplete(true, undefined, transcript)
+            }
             onFail={handleFailAttempt}
+            feedback={feedback}
           />
         )}
       </main>

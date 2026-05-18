@@ -9,6 +9,8 @@ export interface ActivityInstance {
   imageUrl?: string;
   audioUrl?: string;
   plantilla?: string;
+  idRecurso?: string;
+  idHito?: string;
   options?: { id: string; label: string; imageUrl?: string }[];
 }
 
@@ -21,4 +23,7 @@ export interface ActivityResult {
   audioBase64?: string;
   transcript?: string;
   plantilla?: string;
+  idRecurso?: string;
+  idHito?: string;
+  textoEsperado?: string;
 }

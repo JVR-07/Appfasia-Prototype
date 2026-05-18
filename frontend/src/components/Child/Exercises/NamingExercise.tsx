@@ -11,13 +11,16 @@ declare global {
 interface NamingExerciseProps {
   activity: ActivityInstance;
   onSuccess: (transcript?: string) => void;
-  onFail: () => void;
+  onFail: (transcript?: string) => void;
+  isDiagnostic?: boolean;
+  feedback?: "correct" | "incorrect" | null;
 }
 
 export const NamingExercise: React.FC<NamingExerciseProps> = ({
   activity,
   onSuccess,
   onFail,
+  feedback,
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
@@ -27,7 +30,7 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
 
   const getTargetText = () => {
     const matchedOption = activity.options?.find(
-      (opt) => opt.id === activity.targetWord
+      (opt) => opt.id === activity.targetWord,
     );
     return matchedOption ? matchedOption.label : activity.targetWord;
   };
@@ -50,10 +53,7 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
         if (transcript.includes(target) || target.includes(transcript)) {
           onSuccess(transcript);
         } else {
-          onFail();
-          alert(
-            `Te escuché decir: "${transcript}". Intenta de nuevo decir "${target}".`,
-          );
+          onFail(transcript);
         }
         setIsListening(false);
       };
@@ -105,14 +105,13 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
     if (cleanTyped === cleanTarget || cleanTarget.includes(cleanTyped)) {
       onSuccess(cleanTyped);
     } else {
-      onFail();
-      alert(`¡Uy! Intentemos de nuevo. Debías decir "${getTargetText()}".`);
+      onFail(cleanTyped);
     }
     setTypedWord("");
   };
 
   return (
-    <div className="exercise-card">
+    <div className={`exercise-card ${feedback || ""}`}>
       <h2 className="exercise-title">{activity.title}</h2>
       <p className="exercise-subtitle">{activity.subtitle}</p>
 
@@ -130,7 +129,30 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
         )}
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1.5rem" }}>
+      <div
+        style={{
+          margin: "-1rem 0 2rem 0",
+          fontSize: "1.5rem",
+          fontWeight: "bold",
+          color: "var(--color-primary)",
+        }}
+      >
+        Dí en voz alta:{" "}
+        <span
+          style={{ textDecoration: "underline", color: "var(--color-success)" }}
+        >
+          "{getTargetText()}"
+        </span>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "1.5rem",
+        }}
+      >
         {!showKeyboard ? (
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <button
@@ -154,9 +176,19 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
                 <line x1="12" y1="19" x2="12" y2="22"></line>
               </svg>
             </button>
-            <button 
+            <button
               className="option-btn"
-              style={{ minWidth: "50px", height: "50px", borderRadius: "50%", padding: 0, display: "flex", alignItems: "center", justifyContext: "center", fontSize: "1.2rem", boxShadow: "0 4px 0 #cbd5e1" }}
+              style={{
+                minWidth: "50px",
+                height: "50px",
+                borderRadius: "50%",
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContext: "center",
+                fontSize: "1.2rem",
+                boxShadow: "0 4px 0 #cbd5e1",
+              }}
               onClick={() => setShowKeyboard(true)}
               title="Escribir en lugar de hablar"
             >
@@ -164,10 +196,18 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
             </button>
           </div>
         ) : (
-          <form onSubmit={handleTextSubmit} style={{ display: "flex", gap: "0.5rem", width: "100%", maxWidth: "400px" }}>
-            <input 
-              type="text" 
-              placeholder="Escribe la palabra aquí..." 
+          <form
+            onSubmit={handleTextSubmit}
+            style={{
+              display: "flex",
+              gap: "0.5rem",
+              width: "100%",
+              maxWidth: "400px",
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Escribe la palabra aquí..."
               value={typedWord}
               onChange={(e) => setTypedWord(e.target.value)}
               style={{
@@ -177,14 +217,39 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
                 border: "3px solid #cbd5e1",
                 fontFamily: "inherit",
                 fontSize: "1.1rem",
-                outline: "none"
+                outline: "none",
               }}
               autoFocus
             />
-            <button type="submit" className="option-btn" style={{ minWidth: "auto", margin: 0, padding: "0.8rem 1.5rem", backgroundColor: "var(--color-success)", color: "white", boxShadow: "0 4px 0 #15803d", borderColor: "#15803d" }}>
+            <button
+              type="submit"
+              className="option-btn"
+              style={{
+                minWidth: "auto",
+                margin: 0,
+                padding: "0.8rem 1.5rem",
+                backgroundColor: "var(--color-success)",
+                color: "white",
+                boxShadow: "0 4px 0 #15803d",
+                borderColor: "#15803d",
+              }}
+            >
               Enviar
             </button>
-            <button type="button" className="option-btn" style={{ minWidth: "auto", margin: 0, padding: "0.8rem", backgroundColor: "#94a3b8", color: "white", boxShadow: "0 4px 0 #64748b", borderColor: "#64748b" }} onClick={() => setShowKeyboard(false)}>
+            <button
+              type="button"
+              className="option-btn"
+              style={{
+                minWidth: "auto",
+                margin: 0,
+                padding: "0.8rem",
+                backgroundColor: "#94a3b8",
+                color: "white",
+                boxShadow: "0 4px 0 #64748b",
+                borderColor: "#64748b",
+              }}
+              onClick={() => setShowKeyboard(false)}
+            >
               🎤
             </button>
           </form>
@@ -197,32 +262,62 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
         )}
 
         {micError && (
-          <div style={{
-            backgroundColor: "#fffbeb",
-            border: "2px solid #fef3c7",
-            borderRadius: "15px",
-            padding: "1rem",
-            maxWidth: "400px",
-            textAlign: "center"
-          }}>
-            <p style={{ color: "#b45309", fontSize: "0.9rem", margin: "0 0 0.8rem 0", fontWeight: "bold" }}>
-              {micError === "not-allowed" 
-                ? "🔒 El micrófono está bloqueado por el navegador." 
+          <div
+            style={{
+              backgroundColor: "#fffbeb",
+              border: "2px solid #fef3c7",
+              borderRadius: "15px",
+              padding: "1rem",
+              maxWidth: "400px",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                color: "#b45309",
+                fontSize: "0.9rem",
+                margin: "0 0 0.8rem 0",
+                fontWeight: "bold",
+              }}
+            >
+              {micError === "not-allowed"
+                ? "🔒 El micrófono está bloqueado por el navegador."
                 : "⚠️ Tu navegador no soporta el reconocimiento de voz."}
             </p>
-            <div style={{ display: "flex", gap: "0.5rem", justifyContent: "center" }}>
-              <button 
-                type="button" 
-                className="option-btn" 
-                style={{ minWidth: "auto", margin: 0, padding: "0.5rem 1rem", fontSize: "0.9rem", boxShadow: "0 4px 0 #cbd5e1" }}
+            <div
+              style={{
+                display: "flex",
+                gap: "0.5rem",
+                justifyContent: "center",
+              }}
+            >
+              <button
+                type="button"
+                className="option-btn"
+                style={{
+                  minWidth: "auto",
+                  margin: 0,
+                  padding: "0.5rem 1rem",
+                  fontSize: "0.9rem",
+                  boxShadow: "0 4px 0 #cbd5e1",
+                }}
                 onClick={() => setShowKeyboard(true)}
               >
                 ⌨️ Escribir
               </button>
-              <button 
-                type="button" 
-                className="option-btn" 
-                style={{ minWidth: "auto", margin: 0, padding: "0.5rem 1rem", fontSize: "0.9rem", backgroundColor: "#38bdf8", color: "white", borderColor: "#0284c7", boxShadow: "0 4px 0 #0284c7" }}
+              <button
+                type="button"
+                className="option-btn"
+                style={{
+                  minWidth: "auto",
+                  margin: 0,
+                  padding: "0.5rem 1rem",
+                  fontSize: "0.9rem",
+                  backgroundColor: "#38bdf8",
+                  color: "white",
+                  borderColor: "#0284c7",
+                  boxShadow: "0 4px 0 #0284c7",
+                }}
                 onClick={() => onSuccess(getTargetText())}
               >
                 ✨ Simular Éxito

@@ -5,12 +5,14 @@ interface NarratorExerciseProps {
   activity: ActivityInstance;
   onSuccess: (transcript: string) => void;
   onFail: () => void;
+  feedback?: "correct" | "incorrect" | null;
 }
 
 export const NarratorExercise: React.FC<NarratorExerciseProps> = ({
   activity,
   onSuccess,
   onFail,
+  feedback,
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
@@ -100,7 +102,7 @@ export const NarratorExercise: React.FC<NarratorExerciseProps> = ({
   };
 
   return (
-    <div className="exercise-card">
+    <div className={`exercise-card ${feedback || ""}`}>
       <h2 className="exercise-title">{activity.title}</h2>
       <p className="exercise-subtitle">{activity.subtitle}</p>
 
@@ -113,6 +115,25 @@ export const NarratorExercise: React.FC<NarratorExerciseProps> = ({
           />
         )}
       </div>
+
+      {activity.targetWord && (
+        <div
+          style={{
+            margin: "-1rem 0 2rem 0",
+            fontSize: "1.5rem",
+            fontWeight: "bold",
+            color: "var(--color-primary)",
+            textAlign: "center"
+          }}
+        >
+          Habla sobre:{" "}
+          <span
+            style={{ textDecoration: "underline", color: "var(--color-success)" }}
+          >
+            "{activity.targetWord}"
+          </span>
+        </div>
+      )}
 
       <div
         style={{

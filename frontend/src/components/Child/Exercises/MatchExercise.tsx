@@ -4,25 +4,27 @@ import type { ActivityInstance } from "./types";
 interface MatchExerciseProps {
   activity: ActivityInstance;
   onSuccess: (idSeleccionado: string) => void;
-  onFail: () => void;
+  onFail: (idSeleccionado?: string) => void;
+  isDiagnostic?: boolean;
+  feedback?: "correct" | "incorrect" | null;
 }
 
 export const MatchExercise: React.FC<MatchExerciseProps> = ({
   activity,
   onSuccess,
   onFail,
+  feedback,
 }) => {
   const handleOptionClick = (optionId: string) => {
-    if (optionId === activity.targetWord) {
+    if (optionId === activity.idRecurso) {
       onSuccess(optionId);
     } else {
-      onFail();
-      alert("¡Uy! Esa no es. Intenta de nuevo.");
+      onFail(optionId);
     }
   };
 
   return (
-    <div className="exercise-card">
+    <div className={`exercise-card ${feedback || ""}`}>
       <h2 className="exercise-title">{activity.title}</h2>
       <p className="exercise-subtitle">{activity.subtitle}</p>
 
@@ -38,7 +40,7 @@ export const MatchExercise: React.FC<MatchExerciseProps> = ({
             className="audio-btn"
             onClick={() => {
               const utterance = new SpeechSynthesisUtterance(
-                "Encuentra la opción correcta",
+                activity.targetWord,
               );
               window.speechSynthesis.speak(utterance);
             }}
@@ -51,6 +53,28 @@ export const MatchExercise: React.FC<MatchExerciseProps> = ({
           </div>
         )}
       </div>
+
+      {!activity.imageUrl && activity.audioUrl && (
+        <div
+          style={{
+            margin: "-1rem 0 2rem 0",
+            fontSize: "1.6rem",
+            fontWeight: "bold",
+            color: "var(--color-primary)",
+            textAlign: "center",
+          }}
+        >
+          Selecciona la palabra:{" "}
+          <span
+            style={{
+              textDecoration: "underline",
+              color: "var(--color-success)",
+            }}
+          >
+            "{activity.targetWord}"
+          </span>
+        </div>
+      )}
 
       <div className="options-grid">
         {activity.options?.map((opt) => (

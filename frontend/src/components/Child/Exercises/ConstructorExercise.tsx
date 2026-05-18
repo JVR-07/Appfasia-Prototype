@@ -5,16 +5,37 @@ interface ConstructorExerciseProps {
   activity: ActivityInstance;
   onSuccess: (resultadoFinal: string) => void;
   onFail: () => void;
+  isDiagnostic?: boolean;
+  feedback?: "correct" | "incorrect" | null;
 }
 
 export const ConstructorExercise: React.FC<ConstructorExerciseProps> = ({
   activity,
   onSuccess,
   onFail,
+  feedback,
 }) => {
-  const words = activity.options?.map((o) => o.label) || [];
+  const generateWords = () => {
+    if (activity.options && activity.options.length > 0) {
+      return activity.options.map((o) => o.label);
+    }
+    const target = activity.targetWord || "";
+    if (target.includes(" ")) {
+      return target.split(" ").sort(() => Math.random() - 0.5);
+    } else {
+      return target.split("").sort(() => Math.random() - 0.5);
+    }
+  };
+
+  const words = React.useMemo(() => generateWords(), [activity.id]);
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [availableWords, setAvailableWords] = useState<string[]>(words);
+
+  // Reset state when activity changes
+  React.useEffect(() => {
+    setSelectedWords([]);
+    setAvailableWords(generateWords());
+  }, [activity.id]);
 
   const handleSelect = (word: string) => {
     setSelectedWords([...selectedWords, word]);
@@ -27,12 +48,11 @@ export const ConstructorExercise: React.FC<ConstructorExerciseProps> = ({
   };
 
   const handleCheck = () => {
-    const finalSentence = selectedWords.join(" ");
+    const finalSentence = selectedWords.join(activity.targetWord?.includes(" ") ? " " : "");
     if (finalSentence === activity.targetWord) {
       onSuccess(finalSentence);
     } else {
       onFail();
-      alert("¡Uy! Ese no es el orden. Intenta de nuevo.");
       // Reset
       setSelectedWords([]);
       setAvailableWords(words);
@@ -40,7 +60,7 @@ export const ConstructorExercise: React.FC<ConstructorExerciseProps> = ({
   };
 
   return (
-    <div className="exercise-card">
+    <div className={`exercise-card ${feedback || ""}`}>
       <h2 className="exercise-title">{activity.title}</h2>
       <p className="exercise-subtitle">{activity.subtitle}</p>
 
@@ -57,6 +77,17 @@ export const ConstructorExercise: React.FC<ConstructorExerciseProps> = ({
             🧩
           </div>
         )}
+      </div>
+
+      <div
+        style={{
+          margin: "-1rem 0 1rem 0",
+          fontSize: "1.2rem",
+          fontWeight: "bold",
+          color: "var(--color-primary)",
+        }}
+      >
+        Selecciona las piezas en el orden correcto:
       </div>
 
       <div
