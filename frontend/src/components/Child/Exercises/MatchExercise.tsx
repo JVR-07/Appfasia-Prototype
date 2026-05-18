@@ -16,7 +16,11 @@ export const MatchExercise: React.FC<MatchExerciseProps> = ({
   feedback,
 }) => {
   const handleOptionClick = (optionId: string) => {
-    if (optionId === activity.idRecurso) {
+    const isCorrect =
+      optionId === activity.idRecurso ||
+      optionId === activity.targetWord ||
+      optionId === activity.id;
+    if (isCorrect) {
       onSuccess(optionId);
     } else {
       onFail(optionId);

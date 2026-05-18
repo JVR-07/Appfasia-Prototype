@@ -44,6 +44,7 @@ export const DiagnosticExam = () => {
           subtitle: res.avatar_mensaje || "Toca el micrófono y responde.",
           targetWord: ejercicioBackend.texto_esperado,
           imageUrl: ejercicioBackend.imagen_url,
+          idRecurso: ejercicioBackend.id_recurso,
           options: ejercicioBackend.opciones?.map((o: any) => ({
             id: o.id,
             label: o.texto,
@@ -89,6 +90,7 @@ export const DiagnosticExam = () => {
           subtitle: "Continuemos",
           targetWord: nextEj.texto_esperado,
           imageUrl: nextEj.imagen_url,
+          idRecurso: nextEj.id_recurso,
           options: nextEj.opciones?.map((o: any) => ({
             id: o.id,
             label: o.texto,
