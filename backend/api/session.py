@@ -70,6 +70,9 @@ async def _get_mastered_ids(child_id: UUID, db: asyncpg.Connection) -> set[str]:
 
 async def _check_daily_limit(child_id: UUID, db: asyncpg.Connection, level: int) -> bool:
     """True if limit is reached."""
+    if settings.environment == "development":
+        return False
+
     from inference_engine.rules.dosage_rules import get_session_structure
     
     limits = get_session_structure(level)
@@ -79,10 +82,10 @@ async def _check_daily_limit(child_id: UUID, db: asyncpg.Connection, level: int)
     row = await db.fetchrow(
         """
         SELECT 
-            COALESCE(SUM(EXTRACT(EPOCH FROM (COALESCE(fecha_fin, NOW()) - fecha_inicio)) / 60), 0) as total_minutes,
+            COALESCE(SUM(EXTRACT(EPOCH FROM (fecha_fin - fecha_inicio)) / 60), 0) as total_minutes,
             COALESCE(SUM(ejercicios_completados), 0) as total_exercises
         FROM sesiones 
-        WHERE id_child = $1 AND DATE(fecha_inicio) = CURRENT_DATE
+        WHERE id_child = $1 AND DATE(fecha_inicio) = CURRENT_DATE AND estado = 'COMPLETADA'
         """,
         child_id,
     )
@@ -224,7 +227,7 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
     if body.tipo_respuesta == "audio" and transcript and body.texto_esperado:
         ipf = compute_ipf(transcript, body.texto_esperado)
     elif body.tipo_respuesta == "seleccion" and body.id_seleccionado:
-        ipf = 100.0 if body.id_seleccionado == body.texto_esperado else 0.0
+        ipf = 100.0 if body.id_seleccionado == body.id_recurso else 0.0
 
     lme = None
     if transcript and level >= 2:
@@ -239,7 +242,7 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
     )
 
     # ── 3. Inference ──
-    recent_emas = await state_mgr.get_session_emas(child_id)
+    recent_emas = await state_mgr.get_recent_emas(child_id)
     mastered = await _get_mastered_ids(UUID(child_id), db)
 
     sem_score = None
@@ -270,6 +273,10 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
     if body.es_timeout:
         ctx.consecutive_timeouts += 1
     ctx.exercises_done += 1
+
+    from inference_engine.rules.dosage_rules import check_session_limit
+    if check_session_limit(level, ctx.elapsed_minutes, ctx.exercises_done):
+        decision.action = EngineAction.END_SESSION
 
     await state_mgr.save_session_context(child_id, ctx)
 
@@ -330,6 +337,10 @@ async def session_response(body: ResponseRequest, tutor: CurrentTutor, db: DBCon
         await db.execute(
             "UPDATE sesiones SET nivel_sesion = $1 WHERE id_sesion = $2",
             target_level, session_id
+        )
+        await db.execute(
+            "UPDATE children SET nivel_actual = $1 WHERE id_child = $2",
+            target_level, UUID(child_id)
         )
 
     if decision.action != EngineAction.END_SESSION:

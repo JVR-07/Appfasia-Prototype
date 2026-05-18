@@ -328,6 +328,178 @@ RECURSOS_SEED: List[Dict[str, Any]] = [
     {'id': 'W_316', 'texto': 'Sintaxis', 'nivel': 5, 'fonema': 't', 'cat': 5, 'dif': 'alta', 'img': 'sintaxis', 'tags': []},
 ]
 
+_IMG_KEYWORDS: dict[str, str] = {
+    # Nivel 1 – palabras simples
+    'perro': 'dog', 'gato': 'cat', 'vaca': 'cow', 'pato': 'duck',
+    'pez': 'fish', 'mano': 'hand', 'pie': 'foot', 'mamá': 'mother+child',
+    'papá': 'father+child', 'cama': 'bed', 'silla': 'chair', 'pan': 'bread',
+    'leche': 'milk', 'agua': 'water+glass', 'oso': 'bear', 'sapo': 'frog',
+    'bebé': 'baby', 'dedo': 'finger', 'boca': 'mouth', 'ojo': 'eye',
+    'mesa': 'table', 'puerta': 'door', 'duna': 'sand+dune', 'pelo': 'hair',
+    'nube': 'cloud', 'tío': 'uncle', 'tía': 'aunt',
+    'abuelo': 'grandfather', 'abuela': 'grandmother',
+    'diente': 'tooth', 'nariz': 'nose', 'pelota': 'ball',
+    'cubo': 'toy+block', 'tren': 'train', 'sol': 'sun',
+    'luna': 'moon', 'flor': 'flower', 'uva': 'grapes', 'pera': 'pear',
+    'maíz': 'corn', 'sopa': 'soup', 'huevo': 'egg', 'casa': 'house',
+    'vaso': 'glass+water', 'bota': 'boot', 'caja': 'box',
+    'dama': 'lady', 'pino': 'pine+tree', 'tapa': 'lid',
+    'mapa': 'map', 'lupa': 'magnifying+glass', 'puma': 'puma+animal',
+    'moto': 'motorcycle', 'nene': 'toddler',
+    # Nivel 2
+    'conejo': 'rabbit', 'tortuga': 'turtle', 'jirafa': 'giraffe',
+    'elefante': 'elephant', 'mariposa': 'butterfly', 'naranja': 'orange+fruit',
+    'sandía': 'watermelon', 'queso': 'cheese', 'pollo': 'chicken',
+    'arroz': 'rice', 'camisa': 'shirt', 'pantalón': 'pants',
+    'azul': 'blue+color+paint', 'rojo': 'red+color+paint',
+    'verde': 'green+color+paint',
+    'correr': 'running+child', 'saltar': 'jumping+child',
+    'comer': 'eating+child', 'dormir': 'sleeping+child',
+    'escuela': 'school', 'parque': 'playground', 'tienda': 'store',
+    'bicicleta': 'bicycle', 'avión': 'airplane', 'barco': 'boat',
+    'zapato': 'shoe', 'calcetín': 'sock', 'sombrero': 'hat',
+    'guante': 'glove', 'falda': 'skirt', 'abrigo': 'coat',
+    'bufanda': 'scarf', 'pijama': 'pajamas', 'yogur': 'yogurt',
+    'helado': 'ice+cream', 'galleta': 'cookie', 'fresa': 'strawberry',
+    'círculo': 'circle+shape', 'cuadrado': 'square+shape',
+    'triángulo': 'triangle+shape',
+    'grande': 'big+elephant', 'pequeño': 'small+ant',
+    'bailar': 'dancing+child', 'cantar': 'singing+child',
+    'nadar': 'swimming+child', 'reír': 'laughing+child',
+    'llorar': 'crying+child', 'jugar': 'playing+child',
+    'jardín': 'garden', 'cocina': 'kitchen', 'baño': 'bathroom',
+    'camión': 'truck', 'limón': 'lemon', 'fuego': 'fire',
+    'llave': 'key', 'nido': 'bird+nest', 'foca': 'seal+animal',
+    'gallo': 'rooster', 'hormiga': 'ant', 'gallina': 'hen',
+    'caballo': 'horse', 'loro': 'parrot', 'rana': 'frog+green',
+    # Nivel 3
+    'dragón': 'dragon+illustration', 'cocodrilo': 'crocodile',
+    'flamenco': 'flamingo', 'grillo': 'cricket+insect',
+    'delfín': 'dolphin', 'tigre': 'tiger',
+    'árbol': 'tree', 'piedra': 'rock+stone', 'trueno': 'thunder+lightning',
+    'playa': 'beach', 'bosque': 'forest', 'volcán': 'volcano',
+    'estrella': 'star+sky', 'helicóptero': 'helicopter',
+    'grúa': 'crane+machine', 'tractór': 'tractor',
+    'submarino': 'submarine', 'trineo': 'sled+snow',
+    'patín': 'roller+skate', 'trepar': 'climbing+child',
+    'gritar': 'shouting+child', 'frotar': 'rubbing+hands',
+    'abrazar': 'hugging', 'dibujar': 'drawing+child',
+    'construir': 'building+blocks', 'plantar': 'planting+seed',
+    'preparar': 'cooking+preparation', 'explorar': 'exploring+child',
+    'trabajar': 'working', 'escribir': 'writing',
+    'limpiar': 'cleaning', 'feliz': 'happy+child',
+    'triste': 'sad+child', 'enojado': 'angry+child',
+    'asustado': 'scared+child', 'sorprendido': 'surprised+child',
+    'aburrido': 'bored+child',
+    'doctor': 'doctor', 'bombero': 'firefighter',
+    'maestro': 'teacher+classroom', 'cocinero': 'chef+cooking',
+    'policía': 'police+officer',
+    'rápido': 'fast+cheetah', 'lento': 'slow+snail',
+    'suave': 'soft+cotton', 'rugoso': 'rough+texture',
+    'brillante': 'shiny+diamond',
+    'ventana': 'window', 'escalera': 'stairs',
+    'techo': 'roof', 'garaje': 'garage',
+    'sótano': 'basement', 'balcón': 'balcony',
+    'planeta': 'planet', 'cometa': 'comet+space',
+    'princesa': 'princess', 'príncipe': 'prince',
+    'globo': 'balloon', 'plato': 'plate',
+    'blusa': 'blouse', 'clavo': 'nail+metal',
+    'flauta': 'flute', 'fruta': 'fruit',
+    'gruta': 'cave+grotto', 'pluma': 'feather',
+    'brazo': 'arm', 'crema': 'cream+jar',
+    'freno': 'brake', 'grano': 'grain+wheat',
+    'presa': 'dam+water', 'trigo': 'wheat+field',
+    'clima': 'weather', 'flecha': 'arrow',
+    'plomo': 'lead+metal', 'canguro': 'kangaroo',
+    # Nivel 4
+    'frustración': 'frustrated+child', 'entusiasmo': 'excited+child',
+    'nostalgia': 'nostalgia+memory', 'decepción': 'disappointed+child',
+    'gratitud': 'grateful+thank+you', 'valentía': 'brave+courage',
+    'vergüenza': 'embarrassed+child', 'envidia': 'envy+jealousy',
+    'confianza': 'confidence', 'soledad': 'loneliness',
+    'gravedad': 'gravity+apple', 'evaporación': 'evaporation+water',
+    'fotosíntesis': 'photosynthesis+plant', 'eclipse': 'eclipse+sun',
+    'terremoto': 'earthquake', 'atmósfera': 'atmosphere+earth',
+    'cristal': 'crystal', 'imán': 'magnet',
+    'energía': 'energy+lightning', 'oxígeno': 'oxygen+bubbles',
+    'ecosistema': 'ecosystem+nature',
+    'arqueólogo': 'archaeologist', 'astronauta': 'astronaut',
+    'veterinario': 'veterinarian', 'científico': 'scientist',
+    'arquitecto': 'architect', 'periodista': 'journalist',
+    'programador': 'programmer+coding', 'atleta': 'athlete',
+    'músico': 'musician', 'filósofo': 'philosopher',
+    'imaginar': 'imagination+lightbulb', 'resolver': 'solving+puzzle',
+    'comparar': 'comparing', 'describir': 'describing',
+    'analizar': 'analyzing+magnifying', 'recordar': 'memory+brain',
+    'predecir': 'prediction+fortune', 'reflexionar': 'thinking+child',
+    'organizar': 'organizing', 'opinar': 'opinion+speech',
+    'continente': 'continent+map', 'desierto': 'desert',
+    'selva': 'jungle', 'polo': 'arctic+pole',
+    'océano': 'ocean', 'ciudad': 'city',
+    'aldea': 'village', 'frontera': 'border+fence',
+    'capital': 'capital+city', 'archipiélago': 'archipelago+islands',
+    'ayer': 'yesterday+calendar', 'mañana': 'tomorrow+sunrise',
+    'siempre': 'infinity+forever', 'nunca': 'never+stop+sign',
+    'mientras': 'hourglass+time', 'durante': 'during+clock',
+    'después': 'after+clock', 'antes': 'before+clock',
+    'relatividad': 'relativity+physics', 'genética': 'genetics+dna',
+    # Nivel 5
+    'justicia': 'justice+scales', 'libertad': 'freedom+statue',
+    'democracia': 'democracy+voting', 'responsabilidad': 'responsibility',
+    'creatividad': 'creativity+art', 'solidaridad': 'solidarity+helping',
+    'ética': 'ethics+philosophy', 'tolerancia': 'tolerance+diversity',
+    'identidad': 'identity+mirror', 'cultura': 'culture+diversity',
+    'evolución': 'evolution+darwin', 'perspectiva': 'perspective+view',
+    'hipótesis': 'hypothesis+science', 'evidencia': 'evidence+clue',
+    'argumento': 'argument+debate', 'conclusión': 'conclusion+checkmark',
+    'síntesis': 'synthesis+science', 'metáfora': 'metaphor+poetry',
+    'protagonista': 'protagonist+hero', 'antagonista': 'antagonist+villain',
+    'narrador': 'narrator+storytelling', 'rima': 'rhyme+poetry',
+    'estrofa': 'stanza+poem', 'párrafo': 'paragraph+text',
+    'deducir': 'detective+deduction', 'inferir': 'inference+thinking',
+    'sintetizar': 'summarize+notes', 'contextualizar': 'context+puzzle',
+    'argumentar': 'debate+argument', 'evaluar': 'evaluation+checklist',
+    'debatir': 'debate+people', 'contrastar': 'contrast+comparison',
+    'justificar': 'justify+reasoning', 'hipotetizar': 'hypothesis+lightbulb',
+    'clasificar': 'classify+sorting', 'formular': 'formula+science',
+    'lloviendo_a_cántaros': 'heavy+rain', 'ojo_de_la_cara': 'expensive+diamond',
+    'pez_gordo': 'important+boss', 'mano_izquierda': 'diplomacy+handshake',
+    'pisar_el_acelerador': 'speeding+car',
+    'romper_el_hielo': 'icebreaker+conversation',
+    'tirar_la_toalla': 'giving+up', 'sin_embargo': 'however+contrast',
+    'por_lo_tanto': 'therefore+arrow', 'a_pesar_de': 'despite+obstacle',
+    'consecuencia': 'consequence+domino', 'no_obstante': 'nevertheless',
+    'es_decir': 'meaning+explanation', 'en_resumen': 'summary+notes',
+    'asimismo': 'likewise+equals', 'aunque': 'although+but',
+    'puesto_que': 'because+reason',
+    'empatía': 'empathy+caring', 'resiliencia': 'resilience+growth',
+    'paradigma': 'paradigm+shift', 'inferencia': 'inference+detective',
+    'pragmática': 'pragmatic+practical', 'semántica': 'semantics+words',
+    'sintaxis': 'syntax+grammar',
+}
+
+
+import urllib.request
+import urllib.parse
+import json
+
+async def fetch_wiki_image(sem: asyncio.Semaphore, word: str) -> str:
+    async with sem:
+        # Search for the main concept on Spanish Wikipedia
+        url = f"https://es.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(word)}"
+        try:
+            def _fetch():
+                req = urllib.request.Request(url, headers={'User-Agent': 'Appfasia-Seeder/1.0'})
+                with urllib.request.urlopen(req, timeout=3) as response:
+                    return json.loads(response.read().decode())
+            data = await asyncio.to_thread(_fetch)
+            if 'originalimage' in data and 'source' in data['originalimage']:
+                return data['originalimage']['source']
+        except Exception:
+            pass
+        return f"https://placehold.co/512x512?text={urllib.parse.quote(word)}"
+
+
 async def seed_postgres():
     database_url = os.getenv("DATABASE_URL", "postgresql://appfasia_user:-Admin07-@localhost:5432/appfasia")
     # Forzamos la conexión local por defecto asumiendo que se corre desde la máquina host y el puerto está mapeado
@@ -339,15 +511,19 @@ async def seed_postgres():
         print(f"[!] Error de conexión: {e}")
         return
 
-    print("[*] Insertando recursos...")
+    print("[*] Buscando imágenes representativas en Wikipedia de forma concurrente...")
+    sem = asyncio.Semaphore(15)
+    tasks = [fetch_wiki_image(sem, r['texto']) for r in RECURSOS_SEED]
+    image_urls = await asyncio.gather(*tasks)
+
+    print("[*] Insertando recursos en base de datos...")
     
     # Limpiamos antes para que sea idempotente
     await conn.execute("DELETE FROM resultados_ejercicio")
     await conn.execute("DELETE FROM recursos")
 
     inserted = 0
-    for r in RECURSOS_SEED:
-        imagen_url = f"https://loremflickr.com/512/512/{r['img']}"
+    for r, imagen_url in zip(RECURSOS_SEED, image_urls):
         # URL ficticia para audios por ahora
         audio_url = f"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
         
@@ -368,3 +544,4 @@ async def seed_postgres():
 
 if __name__ == "__main__":
     asyncio.run(seed_postgres())
+
