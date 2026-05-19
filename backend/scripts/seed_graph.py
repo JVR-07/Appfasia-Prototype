@@ -74,9 +74,28 @@ def print_summary(nodes: list[dict], edges: list[tuple[str, str]]) -> None:
 
 async def seed_arcadedb(bolt_uri: str, user: str, password: str, db: str) -> None:
     """Connect to ArcadeDB and insert all hitos and edges."""
+    import httpx
     from neo4j import AsyncGraphDatabase
 
     nodes, edges = build_hito_dicts()
+
+    host = "arcadedb"
+    if "://" in bolt_uri:
+        parts = bolt_uri.split("://")[1].split(":")[0]
+        if parts:
+            host = parts
+
+    http_url = f"http://{host}:2480"
+    print(f"Ensuring database '{db}' exists at {http_url}...")
+    try:
+        with httpx.Client(base_url=http_url, auth=(user, password), timeout=30.0) as client:
+            res = client.post("/api/v1/server", json={"command": f"create database {db}"})
+            if res.status_code == 200:
+                print(f"Database '{db}' created or already existed.")
+            else:
+                print(f"Database status response: {res.status_code} - {res.text}")
+    except Exception as e:
+        print(f"Warning: Could not check/create database via HTTP: {e}")
 
     print(f"Connecting to {bolt_uri}...")
     driver = AsyncGraphDatabase.driver(bolt_uri, auth=(user, password))
