@@ -63,9 +63,12 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
         setIsListening(false);
         if (event.error === "not-allowed") {
           setMicError("not-allowed");
+        } else if (event.error === "network") {
+          setMicError("network");
+        } else if (event.error === "no-speech") {
+          setMicError("no-speech");
         } else {
           setMicError("error");
-          onFail();
         }
       };
 
@@ -185,7 +188,7 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
                 padding: 0,
                 display: "flex",
                 alignItems: "center",
-                justifyContext: "center",
+                justifyContent: "center",
                 fontSize: "1.2rem",
                 boxShadow: "0 4px 0 #cbd5e1",
               }}
@@ -281,8 +284,14 @@ export const NamingExercise: React.FC<NamingExerciseProps> = ({
               }}
             >
               {micError === "not-allowed"
-                ? "🔒 El micrófono está bloqueado por el navegador."
-                : "⚠️ Tu navegador no soporta el reconocimiento de voz."}
+                ? "🔒 El micrófono está bloqueado por el navegador o requiere HTTPS. Puedes escribir o simular éxito."
+                : micError === "network"
+                  ? "🌐 Error de red en el reconocimiento de voz. Puedes escribir o simular éxito."
+                  : micError === "no-speech"
+                    ? "🎙️ No se detectó ninguna voz. Intenta de nuevo acercándote al micrófono. Puedes escribir o simular éxito."
+                    : micError === "no-support"
+                      ? "⚠️ Tu navegador no soporta el reconocimiento de voz. Puedes escribir o simular éxito."
+                      : "❌ Ocurrió un error con el micrófono/reconocimiento. Puedes escribir o simular éxito."}
             </p>
             <div
               style={{

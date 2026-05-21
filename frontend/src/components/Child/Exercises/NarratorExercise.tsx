@@ -50,6 +50,10 @@ export const NarratorExercise: React.FC<NarratorExerciseProps> = ({
         setIsListening(false);
         if (event.error === "not-allowed") {
           setMicError("not-allowed");
+        } else if (event.error === "network") {
+          setMicError("network");
+        } else if (event.error === "no-speech") {
+          setMicError("no-speech");
         } else {
           setMicError("error");
         }
@@ -123,12 +127,15 @@ export const NarratorExercise: React.FC<NarratorExerciseProps> = ({
             fontSize: "1.5rem",
             fontWeight: "bold",
             color: "var(--color-primary)",
-            textAlign: "center"
+            textAlign: "center",
           }}
         >
           Habla sobre:{" "}
           <span
-            style={{ textDecoration: "underline", color: "var(--color-success)" }}
+            style={{
+              textDecoration: "underline",
+              color: "var(--color-success)",
+            }}
           >
             "{activity.targetWord}"
           </span>
@@ -237,8 +244,14 @@ export const NarratorExercise: React.FC<NarratorExerciseProps> = ({
               }}
             >
               {micError === "not-allowed"
-                ? "🔒 El micrófono está bloqueado por el navegador."
-                : "⚠️ Tu navegador no soporta el reconocimiento de voz."}
+                ? "🔒 El micrófono está bloqueado por el navegador o requiere HTTPS. Puedes escribir o simular éxito."
+                : micError === "network"
+                  ? "🌐 Error de red en el reconocimiento de voz. Puedes escribir o simular éxito."
+                  : micError === "no-speech"
+                    ? "🎙️ No se detectó ninguna voz. Intenta de nuevo acercándote al micrófono. Puedes escribir o simular éxito."
+                    : micError === "no-support"
+                      ? "⚠️ Tu navegador no soporta el reconocimiento de voz. Puedes escribir o simular éxito."
+                      : "❌ Ocurrió un error con el micrófono/reconocimiento. Puedes escribir o simular éxito."}
             </p>
             <div
               style={{
