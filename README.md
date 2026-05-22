@@ -56,15 +56,15 @@ Appfasia es una plataforma web/móvil basada en inteligencia artificial que act�
 
 ### Frontend
 
-| Componente      | Tecnología              |
-| --------------- | ----------------------- |
-| Framework       | React + TypeScript      |
-| Bundler         | Vite                    |
-| Estado global   | Zustand                 |
-| Animaciones     | Framer Motion           |
-| Drag & Drop     | dnd-kit                 |
-| TTS Avatar      | Web Speech API (nativa) |
-| Audio/Micrófono | Web Audio API (nativa)  |
+| Componente      | Tecnología                             |
+| --------------- | -------------------------------------- |
+| Framework       | React + TypeScript                     |
+| Bundler         | Vite + basicSsl (HTTPS)                |
+| Estado global   | Zustand                                |
+| Animaciones     | Framer Motion                          |
+| Drag & Drop     | dnd-kit                                |
+| TTS Avatar      | Web Speech API (Sintetizador nativo)   |
+| Audio/Micrófono | Web Speech API (Reconocimiento nativo) |
 
 ---
 
@@ -78,7 +78,13 @@ appfasia-prototype/
 │   ├── inference_engine/      # BKT, reglas, grafo, decisión, memoria
 │   ├── services/              # Azure STT, Azure Blob, Gemini LLM
 │   └── models/                # Schemas Pydantic
-├── frontend/                  # App React + TypeScript (pendiente)
+├── frontend/                  # App React + TypeScript (Vite)
+│   ├── src/
+│   │   ├── components/        # Componentes UI de ejercicios y chatbot
+│   │   ├── pages/             # Vistas de Modo Niño y Modo Padres
+│   │   ├── store/             # Zustand stores para estado global
+│   │   └── services/          # Clientes API
+│   └── vite.config.ts         # Configuración con soporte de Proxy e HTTPS
 ├── scripts/                   # Seeding de contenido y assets
 │   ├── seed_content.py
 │   ├── generate_audios.py
@@ -130,18 +136,29 @@ docker compose up -d
 docker compose ps
 ```
 
-### 4. Verificar que el backend responde
+> 💡 **Seeding Automático:** Al levantar el stack por primera vez, el contenedor de backend ejecutará automáticamente los scripts `seed_postgres.py` y `seed_graph.py` para poblar PostgreSQL y ArcadeDB respectivamente.
 
-```bash
-curl http://localhost:8000/health
-```
+### 4. Interfaces y Aplicaciones disponibles
 
-### 5. Interfaces de administración disponibles
+| Servicio            | URL / Puerto                                             | Credenciales                                         |
+| ------------------- | -------------------------------------------------------- | ---------------------------------------------------- |
+| **Frontend Web**    | [https://localhost:5173](https://localhost:5173)         | Cuenta registrada de Tutor                           |
+| **API Swagger UI**  | [http://localhost:8000/docs](http://localhost:8000/docs) | —                                                    |
+| **ArcadeDB Studio** | [http://localhost:2480](http://localhost:2480)           | `root` / valor de `ARCADEDB_ROOT_PASSWORD` en `.env` |
+| **PostgreSQL**      | `localhost:5432`                                         | Credenciales de `POSTGRES_USER` en `.env`            |
+| **Redis**           | `localhost:6379`                                         | Clave de `REDIS_PASSWORD` en `.env`                  |
 
-| Servicio        | URL                        | Credenciales              |
-| --------------- | -------------------------- | ------------------------- |
-| API Swagger UI  | http://localhost:8000/docs | —                         |
-| ArcadeDB Studio | http://localhost:2480      | `root` / valor del `.env` |
+---
+
+## 🎙️ Nota Importante sobre el Micrófono (Desarrollo)
+
+El reconocimiento de voz del frontend (`webkitSpeechRecognition`) utiliza la API nativa del navegador. Por motivos de seguridad de los navegadores, **el micrófono solo funciona bajo contextos seguros (HTTPS o localhost)**.
+
+1. **Aceptar Certificado Auto-firmado:** Al ingresar por primera vez a [https://localhost:5173](https://localhost:5173), tu navegador mostrará una advertencia de seguridad. Haz clic en **Avanzado → Continuar de todos modos**. Esto es necesario para habilitar las APIs seguras.
+2. **Navegadores Soportados:** Se recomienda utilizar **Google Chrome oficial**.
+3. **Brave Browser / Chromium en Linux:** Brave y las variantes libres de Chromium deshabilitan por defecto el soporte de Web Speech API para proteger la privacidad (ya que Chromium envía el audio a transcribir a los servidores de Google y no procesa localmente). Si experimentas un `Speech recognition error network` en estos navegadores:
+   - **Brave/Chromium:** Utiliza los botones de rescate **"⌨️ Escribir"** o **"✨ Simular Éxito"** provistos en el cuadro de alerta de error del ejercicio.
+   - **Firefox:** Habilita el reconocimiento en `about:config` poniendo en `true` las variables `media.webspeech.recognition.enable` y `media.webspeech.recognition.force_enable`.
 
 ---
 
@@ -162,26 +179,25 @@ Toda la documentación técnica se encuentra en [`/docs`](./docs/README.md).
 
 ## Estado del Proyecto
 
-### ✅ Implementaciones Completadas (Sprints 1-4)
+### ✅ Implementaciones Completadas
 
-- **Arquitectura y Diseño:** Stack tecnológico, Contrato API, Algoritmo Diagnóstico Basal/Ceiling, Motor BKT, Pipeline de Métricas (LME/IPF/TRA) y Estrategia de contenido.
+- **Arquitectura y Capa de Datos:** Stack multi-base de datos, Contrato API, Algoritmo Diagnóstico Basal/Ceiling, Motor BKT, Pipeline de Métricas (LME/IPF/TRA) y Estrategia de contenido.
 - **Backend (API y Motor):** API REST (FastAPI), Base de datos PostgreSQL inicializada, Autenticación JWT, Integración de servicios AI (Azure STT, Gemini LLM). Cobertura de QA con 124 tests de lógica clínica.
-- **Base de Datos (Seeding):** Scripts de inicialización `seed_postgres.py` (palabras base) y `seed_arcadedb.py` (grafo de conocimiento).
-- **Frontend (Sistema de Diseño):** Inicialización React + Vite + TS + Zustand. Sistema UI Vanilla CSS con enfoque lúdico, variables consistentes, animaciones suaves y componentes "Glassmorphism".
-- **Modo Padres:** Vistas de Login y Dashboard responsivas. Implementación completa del componente Chatbot Asistente Flotante (animado con click-outside y auto-scroll).
+- **Base de Datos (Seeding):** Ingesta y asociación automatizada en `docker-compose` de `seed_postgres.py` y `seed_graph.py` (grafo de hitos).
+- **Frontend y Diseño Lúdico:** Inicialización React + Vite + TS + Zustand. Sistema UI Vanilla CSS con enfoque lúdico, variables de color consistentes y componentes con estilo "Glassmorphism".
+- **Modo Padres:** Vistas de Registro/Login, Dashboard de progreso y chatbot asistente contextual animado.
 - **Modo Niños:**
-  - Mapa interactivo de progreso vertical (estilo Duolingo) con conexiones dinámicas SVG.
-  - **Orquestador de Sesiones:** Motor funcional para ejecutar diagnósticos y lecciones.
-  - **Ejercicios Interactivos:** Plantillas V-M (Naming), A-M (Repetition) y T-S (Match).
-  - **Integración Nativa:** Uso de la Web Speech API (Reconocimiento de voz y Síntesis de voz) en los ejercicios, incluyendo mecanismos robustos de "fallback" de accesibilidad y pruebas simuladas.
+  - Mapa interactivo de progreso vertical (estilo Duolingo) con conexiones dinámicas SVG y carga de progreso en tiempo real desde la BD.
+  - **Orquestador de Sesiones:** Orquestación funcional end-to-end de los exámenes de diagnóstico y las lecciones periódicas adaptadas con el backend.
+  - **Ejercicios Interactivos:** Plantillas funcionales para Naming (V-M), Repetition (A-M), Match (T-S), Constructor (T-A) e Historias (Narrator/Thinker).
+  - **Gestión de Errores de Voz:** Mitigación inteligente de problemas con el micrófono (red, bloqueos o silencio) sin penalizar el progreso adaptativo del niño, integrando flujos de fallback ("Escribir" / "Simular Éxito").
+  - **Corrección en Identificador:** Resuelto el fallo sistemático de comprobación incorrecta en los ejercicios tipo `match` (Identificador) garantizando el mapeo correcto de `idRecurso`.
 
-### 🔜 Próximos Pasos (Sprint 5 y posteriores)
+### 🔜 Funcionalidades fuera de este prototipo
 
 | Prioridad | Área                                                            |
 | --------- | --------------------------------------------------------------- |
 | 🔴 Alta   | Componente Avatar interactivo animado para guiar al niño        |
-| 🔴 Alta   | Integración End-to-End: Conectar Frontend React con Backend API |
-| 🟡 Media  | Lógica de renderizado y persistencia real de la ruta en la DB   |
 | 🟡 Media  | Especificación e implementación de los 3 Minijuegos de refuerzo |
 | 🟢 Baja   | Artículos reales para la biblioteca informativa RAG             |
 

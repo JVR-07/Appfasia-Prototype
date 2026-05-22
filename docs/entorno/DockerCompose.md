@@ -1,16 +1,18 @@
 # Entorno de Desarrollo — Docker Compose
-> Appfasia Prototype · Versión 0.1
+
+> Appfasia Prototype · Versión 0.2
 
 ---
 
 ## 1. Servicios del Stack Local
 
-| Servicio | Imagen | Puerto local | Descripción |
-|---|---|---|---|
-| **PostgreSQL** | `postgres:16-alpine` | `5432` | BD principal — recursos, usuarios, sesiones |
-| **ArcadeDB** | `arcadedata/arcadedb:latest` | `2480` (HTTP), `7687` (BOLT) | Grafo de conocimiento — hitos y dependencias |
-| **Redis** | `redis:7-alpine` | `6379` | Caché de sesión y estado BKT |
-| **Backend (FastAPI)** | Build local | `8000` | API REST + Motor de Inferencia |
+| Servicio              | Imagen                       | Puerto local                 | Descripción                                  |
+| --------------------- | ---------------------------- | ---------------------------- | -------------------------------------------- |
+| **PostgreSQL**        | `postgres:16-alpine`         | `5432`                       | BD principal — recursos, usuarios, sesiones  |
+| **ArcadeDB**          | `arcadedata/arcadedb:latest` | `2480` (HTTP), `7687` (BOLT) | Grafo de conocimiento — hitos y dependencias |
+| **Redis**             | `redis:7-alpine`             | `6379`                       | Caché de sesión y estado BKT                 |
+| **Backend (FastAPI)** | Build local                  | `8000`                       | API REST + Motor de Inferencia               |
+| **Frontend (React)**  | Build local                  | `5173` (HTTPS)               | SPA interactiva para Modo Niño y Modo Padres |
 
 > Los servicios externos (Azure Blob Storage, Azure Speech Service, Gemini API) son cloud y **no requieren Docker**.
 
@@ -47,9 +49,19 @@ appfasia-prototype/
 │   │   └── metrics.py             # LME, IPF, TRA
 │   └── models/
 │       └── schemas.py             # Modelos Pydantic
-├── frontend/                      # React + Vite (a definir en sprint 2)
+├── frontend/                      # React + Vite + TypeScript (SPA)
+│   ├── src/
+│   │   ├── components/            # Componentes reutilizables (Ejercicios, Chatbot)
+│   │   ├── pages/                 # Vistas (ChildPath, DiagnosticExam, ParentDashboard)
+│   │   ├── store/                 # Estado global con Zustand
+│   │   └── services/              # Clientes de API REST
+│   ├── package.json
+│   ├── vite.config.ts             # Configuración de Vite con SSL (HTTPS) y Proxy
+│   └── Dockerfile                 # Contenedor para levantar el frontend en desarrollo
 ├── scripts/
 │   ├── seed_content.py            # Importación CSV → PostgreSQL + Azure Blob
+│   ├── seed_postgres.py           # Ingesta inicial de datos en PostgreSQL
+│   ├── seed_graph.py              # Ingesta inicial del grafo en ArcadeDB
 │   ├── generate_audios.py         # Batch Azure TTS → MP3
 │   └── upload_assets.py           # Subida masiva a Azure Blob Storage
 ├── docker/
@@ -69,10 +81,9 @@ appfasia-prototype/
 ## 3. `docker-compose.yml`
 
 ```yaml
-version: '3.9'
+version: "3.9"
 
 services:
-
   # ──────────────────────────────────────────────
   # PostgreSQL — Base de datos relacional principal
   # ──────────────────────────────────────────────
@@ -81,8 +92,8 @@ services:
     container_name: appfasia_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB:       ${POSTGRES_DB}
-      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
@@ -105,8 +116,8 @@ services:
     environment:
       ARCADEDB_SERVER_ROOTPASSWORD: ${ARCADEDB_ROOT_PASSWORD}
     ports:
-      - "2480:2480"   # HTTP REST / Studio UI
-      - "7687:7687"   # BOLT (compatible con driver neo4j)
+      - "2480:2480" # HTTP REST / Studio UI
+      - "7687:7687" # BOLT (compatible con driver neo4j)
     volumes:
       - arcadedb_data:/home/arcadedb/databases
     healthcheck:
@@ -151,7 +162,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app          # Hot-reload: cambios en código se reflejan al instante
+      - ./backend:/app # Hot-reload: cambios en código se reflejan al instante
     depends_on:
       postgres:
         condition: service_healthy
@@ -159,7 +170,32 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: >
+      sh -c "
+      python scripts/seed_postgres.py &&
+      python scripts/seed_graph.py --bolt=$$ARCADEDB_BOLT --user=$$ARCADEDB_USER --password=$$ARCADEDB_ROOT_PASSWORD --database=$$ARCADEDB_DATABASE &&
+      uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      "
+
+  # ──────────────────────────────────────────────
+  # Frontend React — Interfaz Web
+  # ──────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: appfasia_frontend
+    restart: unless-stopped
+    environment:
+      - CI=true
+      - PNPM_CONFIG_FROZEN_LOCKFILE=false
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
@@ -304,14 +340,10 @@ DEBUG=true
 Este script se ejecuta automáticamente la primera vez que se levanta el contenedor de PostgreSQL.
 
 ```sql
--- ──────────────────────────────────────────────────
--- Appfasia — Esquema inicial de PostgreSQL
--- ──────────────────────────────────────────────────
-
 -- Extensión para UUIDs
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- ── Tabla de Tutores (padres/cuidadores) ──────────
+-- Tabla de Tutores (padres/cuidadores)
 CREATE TABLE tutores (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre      VARCHAR(100) NOT NULL,
@@ -320,7 +352,7 @@ CREATE TABLE tutores (
     created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
--- ── Tabla de Usuarios (niños) ─────────────────────
+-- Tabla de Usuarios (niños)
 CREATE TABLE usuarios (
     id_usuario      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     nombre          VARCHAR(100) NOT NULL,
@@ -333,23 +365,23 @@ CREATE TABLE usuarios (
 );
 CREATE INDEX idx_usuarios_tutor ON usuarios(id_tutor);
 
--- ── Tabla de Categorías ───────────────────────────
+-- Tabla de Categorías
 CREATE TABLE categorias (
     id      SERIAL PRIMARY KEY,
-    nombre  VARCHAR(50) UNIQUE NOT NULL   -- 'animales', 'ropa', 'emociones'...
+    nombre  VARCHAR(50) UNIQUE NOT NULL
 );
 
--- ── Tabla de Recursos (Diccionario Atómico) ───────
+-- Tabla de Recursos (Diccionario Atómico)
 CREATE TABLE recursos (
     id_recurso      VARCHAR(10) PRIMARY KEY,
-    tipo            VARCHAR(20) NOT NULL,       -- 'palabra', 'frase', 'metafora'
+    tipo            VARCHAR(20) NOT NULL,
     texto           TEXT NOT NULL,
     nivel_sugerido  SMALLINT NOT NULL,
     fonema_objetivo VARCHAR(10),
     id_categoria    INT REFERENCES categorias(id),
-    dificultad_art  VARCHAR(10),               -- 'alta', 'media', 'baja'
-    imagen_url      TEXT,                       -- URL CDN de Azure
-    audio_url       TEXT,                       -- URL CDN de Azure
+    dificultad_art  VARCHAR(10),
+    imagen_url      TEXT,
+    audio_url       TEXT,
     tags            TEXT[],
     created_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -359,43 +391,43 @@ CREATE INDEX idx_recursos_dificultad ON recursos(dificultad_art);
 CREATE INDEX idx_recursos_tags     ON recursos USING GIN(tags);
 CREATE INDEX idx_recursos_categoria ON recursos(id_categoria);
 
--- ── Tabla de Diagnósticos ─────────────────────────
+-- Tabla de Diagnósticos
 CREATE TABLE diagnosticos (
     id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     child_id              UUID NOT NULL REFERENCES usuarios(id_usuario),
     nivel_detectado       SMALLINT NOT NULL,
     p_l0_inicial          FLOAT NOT NULL,
     total_interacciones   SMALLINT NOT NULL,
-    razon_finalizacion    VARCHAR(20) NOT NULL,  -- 'CEILING', 'LIMIT_REACHED'
+    razon_finalizacion    VARCHAR(20) NOT NULL,
     historial_json        JSONB,
     created_at            TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_diagnosticos_child ON diagnosticos(child_id);
 
--- ── Tabla de Sesiones ─────────────────────────────
+-- Tabla de Sesiones
 CREATE TABLE sesiones (
     id_sesion       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     id_usuario      UUID NOT NULL REFERENCES usuarios(id_usuario),
     fecha_inicio    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     fecha_fin       TIMESTAMPTZ,
     nivel_sesion    SMALLINT NOT NULL,
-    estado          VARCHAR(20) DEFAULT 'EN_CURSO',  -- 'EN_CURSO', 'COMPLETADA', 'INTERRUMPIDA'
-    etiqueta_tutor  VARCHAR(20),                     -- 'Cansancio', 'Distraccion', 'Enfermedad'
+    estado          VARCHAR(20) DEFAULT 'EN_CURSO',
+    etiqueta_tutor  VARCHAR(20),
     r0_weight       FLOAT DEFAULT 0.5,
     ejercicios_completados SMALLINT DEFAULT 0,
     ipf_promedio    FLOAT,
-    payload_json    JSONB                            -- Sesión completa para replay
+    payload_json    JSONB
 );
 CREATE INDEX idx_sesiones_usuario ON sesiones(id_usuario);
 CREATE INDEX idx_sesiones_fecha   ON sesiones(fecha_inicio DESC);
 
--- ── Tabla de Resultados por Ejercicio ─────────────
+-- Tabla de Resultados por Ejercicio
 CREATE TABLE resultados_ejercicio (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     id_sesion       UUID NOT NULL REFERENCES sesiones(id_sesion),
     id_recurso      VARCHAR(10) REFERENCES recursos(id_recurso),
-    plantilla       VARCHAR(30),                     -- 'Nombrador', 'Identificador', 'Constructor'
-    hardware_req    VARCHAR(5),                      -- 'V-M', 'T-S', 'T-A'
+    plantilla       VARCHAR(30),
+    hardware_req    VARCHAR(5),
     lme             FLOAT,
     ipf             FLOAT,
     tra_ms          INT,
@@ -408,24 +440,12 @@ CREATE TABLE resultados_ejercicio (
 CREATE INDEX idx_resultados_sesion  ON resultados_ejercicio(id_sesion);
 CREATE INDEX idx_resultados_recurso ON resultados_ejercicio(id_recurso);
 
--- ── Insertar categorías base ──────────────────────
+-- Insertar categorías base
 INSERT INTO categorias (nombre) VALUES
-    ('animales'),
-    ('alimentos'),
-    ('partes_del_cuerpo'),
-    ('familia'),
-    ('objetos_del_hogar'),
-    ('juguetes'),
-    ('ropa'),
-    ('colores_y_formas'),
-    ('verbos'),
-    ('emociones'),
-    ('naturaleza_y_ciencia'),
-    ('profesiones'),
-    ('lugares'),
-    ('lenguaje_figurado'),
-    ('transporte'),
-    ('conceptos_abstractos');
+    ('animales'), ('alimentos'), ('partes_del_cuerpo'), ('familia'),
+    ('objetos_del_hogar'), ('juguetes'), ('ropa'), ('colores_y_formas'),
+    ('verbos'), ('emociones'), ('naturaleza_y_ciencia'), ('profesiones'),
+    ('lugares'), ('lenguaje_figurado'), ('transporte'), ('conceptos_abstractos');
 ```
 
 ---
@@ -433,7 +453,7 @@ INSERT INTO categorias (nombre) VALUES
 ## 8. `.gitignore`
 
 ```gitignore
-# Variables de entorno (nunca al repositorio)
+# Variables de entorno
 .env
 
 # Python
@@ -443,14 +463,17 @@ __pycache__/
 .venv/
 venv/
 
-# Docker
+# Node / Frontend
+node_modules/
+dist/
+.eslintcache
 *.log
 
-# Contenido local (imágenes antes de subir a Azure)
+# Contenido local
 content/imagenes/
 content/audios/
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -468,70 +491,52 @@ git clone <repo_url> && cd appfasia-prototype
 
 # 2. Copiar y configurar variables de entorno
 cp .env.example .env
-# → Editar .env con los valores reales de Azure y Gemini
+# → Editar .env con las claves reales de Azure y Gemini
 
 # 3. Generar un JWT_SECRET_KEY seguro
 openssl rand -hex 32
 
-# 4. Levantar todos los servicios
+# 4. Levantar todos los servicios (seeding automático de Postgres y ArcadeDB incluido)
 docker compose up -d
 
 # 5. Verificar que todos los servicios están saludables
 docker compose ps
-
-# 6. Ver logs del backend en tiempo real
-docker compose logs -f backend
 ```
 
 ---
 
-### Uso diario
+### Acceso a interfaces de administración y aplicaciones
 
-```bash
-# Levantar el entorno
-docker compose up -d
-
-# Detener el entorno (mantiene los datos)
-docker compose stop
-
-# Detener y eliminar contenedores (mantiene los volúmenes)
-docker compose down
-
-# Destruir TODO incluyendo datos (reset completo)
-docker compose down -v
-```
+| Servicio               | URL                                                      | Credenciales                      |
+| ---------------------- | -------------------------------------------------------- | --------------------------------- |
+| **Frontend App**       | [https://localhost:5173](https://localhost:5173)         | Cuenta de Tutor registrada        |
+| **FastAPI Swagger UI** | [http://localhost:8000/docs](http://localhost:8000/docs) | —                                 |
+| **ArcadeDB Studio**    | [http://localhost:2480](http://localhost:2480)           | `root` / `ARCADEDB_ROOT_PASSWORD` |
+| **PostgreSQL**         | `localhost:5432`                                         | Variables del `.env`              |
+| **Redis**              | `localhost:6379`                                         | `REDIS_PASSWORD` del `.env`       |
 
 ---
 
-### Gestión de servicios individuales
+### 🎙️ Configuración de Seguridad e Ingesta de Audio (Desarrollo)
 
-```bash
-# Reiniciar solo el backend (útil tras instalar una dependencia nueva)
-docker compose restart backend
-
-# Ver logs de un servicio específico
-docker compose logs -f postgres
-docker compose logs -f arcadedb
-docker compose logs -f redis
-
-# Entrar a la shell de un contenedor
-docker compose exec backend bash
-docker compose exec postgres psql -U appfasia_user -d appfasia
-docker compose exec redis redis-cli -a $REDIS_PASSWORD
-```
+- **Certificado SSL de Vite:** El frontend se expone a través de HTTPS con `basicSsl` para cumplir con las políticas estrictas del navegador para capturar el micrófono. Al abrir [https://localhost:5173](https://localhost:5173), haz clic en **Avanzado → Proceder / Continuar** para aceptar el certificado de desarrollo.
+- **Navegador recomendado:** Utiliza **Google Chrome oficial**.
+- **Limitación de Brave / Chromium:** Al usar Brave u otros navegadores libres en Linux/Arch, la Web Speech API nativa falla inmediatamente con `Speech recognition error network` por motivos de privacidad (Brave bloquea la conexión de envío de voz a Google Cloud). En estos casos, puedes utilizar los botones de **"Escribir"** o **"Simular Éxito"** para avanzar en las lecciones sin que se te penalice por errores técnicos.
 
 ---
 
-### Seeding de contenido
+### Seeding de contenido (Manual)
+
+Si necesitas forzar el seeding del catálogo o de los archivos multimedia manualmente:
 
 ```bash
-# Generar audios con Azure TTS (requiere .env configurado)
+# Generar audios con Azure TTS (requiere .env configurado con llave)
 docker compose exec backend python scripts/generate_audios.py
 
 # Subir imágenes y audios a Azure Blob Storage
 docker compose exec backend python scripts/upload_assets.py
 
-# Importar CSV a PostgreSQL (ejecutar después de los dos anteriores)
+# Importar CSV a PostgreSQL
 docker compose exec backend python scripts/seed_content.py \
   --csv content/seed_resources.csv \
   --phase 0      # 0 = Solo Nivel 1 (MVP), 1-3 = fases completas
@@ -539,21 +544,12 @@ docker compose exec backend python scripts/seed_content.py \
 
 ---
 
-### Acceso a interfaces de administración
-
-| Servicio | URL | Credenciales |
-|---|---|---|
-| **FastAPI Swagger UI** | http://localhost:8000/docs | — |
-| **FastAPI ReDoc** | http://localhost:8000/redoc | — |
-| **ArcadeDB Studio** | http://localhost:2480 | `root` / `ARCADEDB_ROOT_PASSWORD` |
-| **PostgreSQL** | `localhost:5432` | Variables del `.env` |
-| **Redis** | `localhost:6379` | `REDIS_PASSWORD` del `.env` |
-
----
-
 ## 10. Verificación de Salud del Stack
 
 ```bash
+# Verificar que el frontend responde (ignorar advertencia de certificado)
+curl -k https://localhost:5173
+
 # Verificar que FastAPI responde
 curl http://localhost:8000/health
 
@@ -566,20 +562,4 @@ curl http://localhost:2480/api/v1/ready
 # Verificar Redis
 docker compose exec redis redis-cli -a $REDIS_PASSWORD ping
 # → Debe responder: PONG
-```
-
-### Endpoint de health check del backend
-
-```python
-# En main.py — respuesta esperada de GET /health
-@app.get("/health")
-async def health_check():
-    return {
-        "status": "ok",
-        "services": {
-            "postgres": await check_postgres(),
-            "arcadedb": await check_arcadedb(),
-            "redis":    await check_redis()
-        }
-    }
 ```

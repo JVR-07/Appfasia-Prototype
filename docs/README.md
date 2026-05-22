@@ -88,12 +88,15 @@ Ubicación: `docs/entorno/`
 | Algoritmo Diagnóstico Basal/Ceiling  | AlgoritmoDiagnostico.md    |
 | Estrategia de contenido (315 items)  | EstrategiaContenido.md     |
 | Entorno Docker Compose               | DockerCompose.md           |
-| Estructura de wireframes (plantilla) | frontend/Wireframes.md     |
+| Estructura de wireframes             | frontend/Wireframes.md     |
 | Lógica Clínica e Implementación BKT  | backend/MotorInferencia.md |
 | Plantillas de Ejercicio (8 tipos)    | backend/MotorInferencia.md |
 | Evaluador Semántico LLM (SEM)        | backend/MotorInferencia.md |
 | Alcance de Hitos (~200 nodos)        | backend/MotorInferencia.md |
 | Estrategia de QA y Suite de Pruebas  | entorno/Testing.md         |
+| Seeding del grafo ArcadeDB           | entorno/DockerCompose.md   |
+| Importación del catálogo a Postgres  | entorno/DockerCompose.md   |
+| Integración End-to-End Front/Back    | ArquitecturaTecnica.md     |
 | Inicialización y Config. de Frontend | README principal           |
 | Sistema de Diseño e UI (Modo Padres) | frontend/Wireframes.md     |
 | Orquestador y Ejercicios (Modo Niño) | frontend/Wireframes.md     |
@@ -105,24 +108,4 @@ Ubicación: `docs/entorno/`
 | Área                                                   | Documento destino      | Prioridad |
 | ------------------------------------------------------ | ---------------------- | --------- |
 | Diseño visual del Avatar (nombre, estilo, animaciones) | frontend/Wireframes.md | 🔴 Alta   |
-| Integración End-to-End Frontend/FastAPI                | arquitectura/          | 🔴 Alta   |
 | Especificación de Minijuegos (mecánicas de juego)      | frontend/Wireframes.md | 🟡 Media  |
-
----
-
-### 🔜 Pendientes — Bloque 2 · Backend (Infraestructura de Datos Restante)
-
-_Nota: La API REST, el patrón de repositorios, la base de datos PostgreSQL, la autenticación JWT y los servicios de LLM ya fueron completados exitosamente en la Sprint 3. Faltan los scripts finales de ingesta de contenido._
-
-| Área                                         | Documento destino                | Prioridad |
-| -------------------------------------------- | -------------------------------- | --------- |
-| Seeding del grafo ArcadeDB (hitos + aristas) | backend/GrafoConocimiento.md     | 🔴 Alta   |
-| Importación del catálogo CSV a PostgreSQL    | contenido/EstrategiaContenido.md | 🔴 Alta   |
-
----
-
-### 🔜 Pendientes — Bloque 3 · Transversal (paralelo al desarrollo)
-
-| Área                                           | Documento destino             | Prioridad |
-| ---------------------------------------------- | ----------------------------- | --------- |
-| Biblioteca informativa para padres (artículos) | contenido/BibliotecaPadres.md | 🟡 Media  |
